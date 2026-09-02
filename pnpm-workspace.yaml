@@ -1,0 +1,10 @@
+allowBuilds:
+  esbuild: true
+  sharp: false
+  unrs-resolver: true
+
+overrides:
+  electron-to-chromium: 1.5.418
+  "tsx>esbuild": 0.25.12
+  "vite>esbuild": 0.25.12
+  "vite>rollup": 4.60.1
