@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 1: Authentication and Authorization** is implemented. The application has a protected shell, database sessions, doctor bootstrap tooling, and doctor-managed secretary accounts. Patient management, scheduling, consultations, notes, follow-ups, prescriptions, and other medical workflows are not implemented.
+**Phase 2: Patient Administrative Records** is implemented. Doctors and secretaries can create, find, view, and update administrative patient records. Doctors can additionally archive and restore patients. Scheduling, consultations, notes, follow-ups, prescriptions, and all clinical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -20,7 +20,6 @@ This project is not production-ready healthcare software. A real deployment requ
 - Tailwind CSS
 - Vitest
 - pnpm
-
 - Better Auth database sessions with explicit Argon2id password hashing
 
 ## Requirements
@@ -79,7 +78,7 @@ pnpm start           # run the production build
 pnpm lint            # ESLint
 pnpm typecheck       # strict TypeScript check
 pnpm test            # test suite once
-pnpm test:integration # PostgreSQL-backed authentication tests (isolated test DB)
+pnpm test:integration # PostgreSQL-backed auth and patient tests (isolated test DB)
 pnpm test:watch      # test suite in watch mode
 pnpm format          # format files
 pnpm format:check    # verify formatting
@@ -99,6 +98,12 @@ There is no public registration, public password reset, email verification, or s
 
 The configured `APP_URL` must match the browser-facing origin. Production ingress must terminate HTTPS, prevent direct origin access, and replace—not append untrusted values to—the forwarded client-IP header. See the security architecture for session, CSRF, proxy, and throttle details.
 
+## Patient administration
+
+`/patients` provides bounded search and pagination for patient number, name, phone, and email. Searches use an authenticated request body so patient identifiers do not appear in URL access logs. Patient records contain administrative contact information only—there are no medical-history, diagnosis, note, medication, or other clinical fields. Patient numbers are immutable and allocated by PostgreSQL. Concurrent edits use a version token and return a conflict instead of silently overwriting newer changes.
+
+Both roles can create and edit active records. Only the doctor can archive or restore a patient. Archiving preserves the UUID and patient number, hides the record from default searches, and prevents ordinary editing until restoration.
+
 ## Project structure
 
 ```text
@@ -107,6 +112,7 @@ src/config/         validated server configuration
 src/db/             database client and schema entrypoint
 src/modules/auth/   authentication, sessions, throttling, capabilities
 src/modules/users/  staff-account validation and services
+src/modules/patients/ administrative patient validation, DTOs, queries, services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -114,7 +120,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Only authentication/security modules exist today. Future business modules will be added when their phases are approved.
+No appointment or clinical domain modules exist. They will be added only when their phases are approved.
 
 ## Documentation
 

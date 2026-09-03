@@ -47,6 +47,8 @@ These rules apply to all work in this repository.
 
 - Implement only the explicitly approved phase. Do not prepare product features from later phases.
 - Do not add Redis, Kafka, Kubernetes, Elasticsearch, GraphQL, microservices, or comparable infrastructure without an approved ADR.
-- Authentication is the only implemented product foundation. Patient, appointment, consultation, note, follow-up, and prescription functionality belongs to later approved phases.
+- Authentication and administrative patient records are implemented. Appointment, consultation, note, follow-up, and prescription functionality belongs to later approved phases.
+- Keep the Patient module administrative-only. Do not add generic notes, metadata, or clinical fields to patient records.
+- Patient numbers are immutable; patient updates and lifecycle changes must preserve optimistic-concurrency checks.
 - Do not expose public registration, email recovery, or Better Auth's complete catch-all route without a new approved requirement and security review.
 - Create staff through application services: the operator CLI creates the single doctor and authorized doctors create secretaries. Never accept a role from secretary-creation input.

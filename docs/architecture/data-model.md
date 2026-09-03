@@ -1,8 +1,8 @@
-# Planned data model
+# Data model
 
-## Phase 1 state
+## Phase 2 state
 
-The database contains only authentication and security infrastructure. `auth_user`, `auth_session`, `auth_account`, `auth_verification`, and `auth_rate_limit` follow Better Auth's required schema. The application adds role/active fields to `auth_user`, plus `login_throttle` and `audit_log`.
+The database contains authentication/security infrastructure and one administrative `patient` domain table. No clinical tables or fields exist.
 
 The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
 
@@ -12,7 +12,7 @@ Sessions and accounts cascade when their user is removed. Audit actor references
 
 - PostgreSQL is authoritative.
 - Application identifiers use PostgreSQL `uuid` values generated with cryptographically secure randomness.
-- Business tables will carry `clinic_id` even though V1 operates one clinic.
+- One application/database deployment is the V1 clinic boundary. Multi-clinic scoping is deferred under ADR-005.
 - Instants use `timestamptz` and are stored as UTC.
 - Birth dates, issue dates, and clinic-local due dates use `date`.
 - Clinic timezone uses an IANA identifier such as `Africa/Casablanca`.
@@ -33,11 +33,25 @@ Sessions and accounts cascade when their user is removed. Audit actor references
 | Follow-up work         | FollowUp                                                               |     5 |
 | Prescribing            | Prescription, PrescriptionItem, DocumentCounter                        |     6 |
 
-Clinic and doctor-profile tables were deliberately deferred: authentication does not require them, and Phase 1 must not introduce a premature clinic domain. Future business tables still follow ADR-005 clinic scoping. The initial Patient model will not contain a sex or gender field.
+Clinic and doctor-profile tables remain deferred. The initial Patient model does not contain sex/gender, government identifiers, free-text notes, insurance, or clinical information.
+
+## Patient administration
+
+`patient.id` is the stable UUID/API identity. `patient_number` is generated from `patient_number_seq` as `P-` plus at least six digits. The sequence is concurrency-safe, gaps are accepted, and a database trigger prevents patient-number changes.
+
+Names preserve Unicode spelling/casing after surrounding and repeated whitespace normalization. Birth date uses PostgreSQL `date`. Optional contact fields store blank input as `NULL`; email is lowercased for matching, while phone retains a display form and a conservative digits/leading-plus search form. Phone and email are deliberately non-unique.
+
+`version` starts at one and increments atomically for administrative updates and lifecycle changes. Updates require the expected version. A stale mutation affects no row and becomes an application conflict.
+
+Patient archiving is an explicit lifecycle rule, not a generic soft-delete framework. `archived_at` and `archived_by` are either both set or both null. Archived rows remain readable and retain their identifiers, but are excluded from default search and cannot be ordinarily edited. Only a doctor may archive or restore them. There is no application hard-delete operation.
+
+Search uses parameterized PostgreSQL predicates over patient number, case-insensitive display names, normalized phone, and normalized email. Wildcard characters are escaped, pages contain at most 20 rows, and archived rows are excluded unless deliberately requested. Search terms are sent in an authenticated POST body rather than a URL so names and contact identifiers do not enter routine URL access logs. No extension or external search service is required at the expected scale.
+
+Names remain modeled as required `first_name` and `last_name` fields for V1. This is a known international-name limitation and should be revisited only with a concrete workflow. Duplicate warnings, automated deduplication, and patient merging are deferred; names, phones, and emails are intentionally non-unique.
 
 ## Disclosure boundaries
 
-Secretary-facing patient and appointment DTOs contain only administrative information. Consultation content, notes, diagnoses, prescription contents, and sensitive follow-up reasons are excluded at the repository/service boundary, not merely hidden in UI components.
+Patient queries return explicit administrative DTOs. Internal search-normalization fields and archive actor IDs are not returned. Future consultation content, notes, diagnoses, prescription contents, and sensitive follow-up reasons must remain in separate module/query boundaries.
 
 ## Historical integrity
 

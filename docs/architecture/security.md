@@ -17,7 +17,7 @@ Security is a system property, not a production-readiness claim. The V1 reposito
 - Better Auth stores opaque sessions in PostgreSQL; authorization does not rely on client-held role claims.
 - Credentials use Argon2id. Defaults are 65,536 KiB memory, 3 iterations, and parallelism 1.
 - Session cookies are HttpOnly and SameSite=Lax, and are Secure when `APP_URL` is HTTPS.
-- All application-owned authentication and staff-account mutations require an exact trusted `Origin`.
+- All application-owned authentication, staff-account, and patient mutations require an exact trusted `Origin`.
 - Login throttles are PostgreSQL-backed and survive application restarts.
 
 Nonce-based CSP makes application rendering dynamic. This is an accepted trade-off for a future authenticated application containing sensitive information. New third-party origins require explicit review; do not weaken CSP globally to accommodate them.
@@ -36,11 +36,15 @@ There is no self-service recovery. The doctor manages secretary credentials thro
 
 ## Authorization controls
 
-Roles are `DOCTOR` and `SECRETARY`, but services authorize named capabilities through centralized policy. Secretary capabilities are limited to the shell and future patient-administrative/appointment operations. No consultation, clinical-note, sensitive follow-up, prescription, audit, or staff-administration capability is granted. Better Auth role and active fields reject client input, and secretary creation hard-codes the role server-side.
+Roles are `DOCTOR` and `SECRETARY`, but services authorize named capabilities through centralized policy. Both roles can read, create, and update administrative patient records. Patient archive and restore are doctor-only. Secretaries have no consultation, clinical-note, sensitive follow-up, prescription, audit, or staff-administration capability. Resource UUIDs are never treated as authorization.
+
+Patient mutation inputs are strict Zod objects and database writes enumerate accepted fields. Submitted patient numbers, roles, clinical fields, and unknown properties are rejected. Archived-state and optimistic-concurrency checks execute in database transactions. Administrative DTO projections prevent internal search and lifecycle fields from leaking into browser responses.
+
+Patient search terms are carried in a same-origin authenticated POST body, not the URL, because names, phone numbers, and emails in query strings would commonly enter proxy and access logs. Request-body logging remains prohibited.
 
 ## Security audit events
 
-The minimal `audit_log` records authentication outcomes and staff-account lifecycle actions. Metadata is allow-listed by each call and excludes credentials, cookies, tokens, request bodies, and raw login identifiers. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
+The `audit_log` records authentication outcomes, staff-account lifecycle actions, and patient create/update/archive/restore mutations. Patient metadata is limited to changed field names, resulting version, and archival state. It excludes patient values, names, birth dates, contact details, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
 
 ## Logging rules
 
@@ -55,6 +59,8 @@ They must never contain:
 - Database URLs, secrets, or encryption keys.
 
 Future error tracking must apply the same rules and be tested for redaction. Audit logs are a separate domain and must not become a copy of clinical records.
+
+Emergency-contact details describe a third party and are personal data. They receive the same logging, access-control, backup, and disclosure protections as the patient's administrative information.
 
 ## Infrastructure responsibilities
 

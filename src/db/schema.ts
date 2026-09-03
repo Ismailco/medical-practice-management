@@ -3,10 +3,12 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
   pgEnum,
+  pgSequence,
   pgTable,
   text,
   timestamp,
@@ -31,7 +33,16 @@ export const auditAction = pgEnum("audit_action", [
   "USER_SECRETARY_PASSWORD_RESET",
   "USER_DOCTOR_BOOTSTRAPPED",
   "USER_DOCTOR_PASSWORD_RESET",
+  "PATIENT_CREATED",
+  "PATIENT_ADMIN_UPDATED",
+  "PATIENT_ARCHIVED",
+  "PATIENT_RESTORED",
 ]);
+
+export const patientNumberSequence = pgSequence("patient_number_seq", {
+  startWith: 1,
+  increment: 1,
+});
 
 export const user = pgTable(
   "auth_user",
@@ -160,7 +171,9 @@ export const auditLog = pgTable(
     entityType: text("entity_type").notNull(),
     entityId: uuid("entity_id"),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
-    metadata: jsonb("metadata").$type<Record<string, string | number | boolean | null>>().notNull(),
+    metadata: jsonb("metadata")
+      .$type<Record<string, string | number | boolean | null | readonly string[]>>()
+      .notNull(),
   },
   (table) => [
     index("audit_log_actor_occurred_at_idx").on(table.actorUserId, table.occurredAt),
@@ -168,6 +181,82 @@ export const auditLog = pgTable(
     index("audit_log_entity_idx").on(table.entityType, table.entityId),
     check("audit_log_entity_type_nonempty_check", sql`length(btrim(${table.entityType})) > 0`),
     check("audit_log_metadata_object_check", sql`jsonb_typeof(${table.metadata}) = 'object'`),
+  ],
+);
+
+export const patient = pgTable(
+  "patient",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    patientNumber: text("patient_number")
+      .default(sql`'P-' || lpad(nextval('patient_number_seq')::text, 6, '0')`)
+      .notNull(),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    dateOfBirth: date("date_of_birth", { mode: "string" }).notNull(),
+    phone: text("phone"),
+    phoneNormalized: text("phone_normalized"),
+    email: text("email"),
+    address: text("address"),
+    emergencyContactName: text("emergency_contact_name"),
+    emergencyContactPhone: text("emergency_contact_phone"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    version: integer("version").default(1).notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedBy: uuid("archived_by").references(() => user.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    uniqueIndex("patient_patient_number_unique").on(table.patientNumber),
+    index("patient_active_name_idx")
+      .on(table.lastName, table.firstName, table.patientNumber)
+      .where(sql`${table.archivedAt} IS NULL`),
+    index("patient_phone_normalized_idx").on(table.phoneNormalized),
+    index("patient_email_lower_idx").on(sql`lower(${table.email})`),
+    index("patient_archived_at_idx").on(table.archivedAt),
+    check("patient_number_format_check", sql`${table.patientNumber} ~ '^P-[0-9]{6,}$'`),
+    check(
+      "patient_first_name_check",
+      sql`length(btrim(${table.firstName})) BETWEEN 1 AND 100 AND ${table.firstName} = btrim(${table.firstName})`,
+    ),
+    check(
+      "patient_last_name_check",
+      sql`length(btrim(${table.lastName})) BETWEEN 1 AND 100 AND ${table.lastName} = btrim(${table.lastName})`,
+    ),
+    check("patient_date_of_birth_check", sql`${table.dateOfBirth} <= CURRENT_DATE`),
+    check(
+      "patient_phone_length_check",
+      sql`${table.phone} IS NULL OR length(${table.phone}) <= 32`,
+    ),
+    check(
+      "patient_phone_normalized_check",
+      sql`${table.phoneNormalized} IS NULL OR ${table.phoneNormalized} ~ '^\\+?[0-9]{5,20}$'`,
+    ),
+    check(
+      "patient_phone_pair_check",
+      sql`(${table.phone} IS NULL) = (${table.phoneNormalized} IS NULL)`,
+    ),
+    check(
+      "patient_email_check",
+      sql`${table.email} IS NULL OR (length(${table.email}) <= 254 AND ${table.email} = lower(btrim(${table.email})))`,
+    ),
+    check(
+      "patient_address_length_check",
+      sql`${table.address} IS NULL OR length(${table.address}) <= 500`,
+    ),
+    check(
+      "patient_emergency_name_length_check",
+      sql`${table.emergencyContactName} IS NULL OR length(${table.emergencyContactName}) <= 100`,
+    ),
+    check(
+      "patient_emergency_phone_length_check",
+      sql`${table.emergencyContactPhone} IS NULL OR length(${table.emergencyContactPhone}) <= 32`,
+    ),
+    check("patient_version_positive_check", sql`${table.version} >= 1`),
+    check(
+      "patient_archive_pair_check",
+      sql`(${table.archivedAt} IS NULL) = (${table.archivedBy} IS NULL)`,
+    ),
   ],
 );
 

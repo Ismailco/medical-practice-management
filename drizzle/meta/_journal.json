@@ -8,6 +8,13 @@
       "when": 1788390400447,
       "tag": "0000_organic_iron_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788416024921,
+      "tag": "0001_slow_khan",
+      "breakpoints": true
     }
   ]
 }

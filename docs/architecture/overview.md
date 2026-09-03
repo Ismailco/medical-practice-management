@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 1 provides authentication, authorization, and staff administration. Business domains are not implemented.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 2 provides authentication, staff administration, and administrative patient records. Appointment and clinical domains are not implemented.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -46,6 +46,12 @@ UI visibility is not an authorization control.
 Only `/api/auth/login` and `/api/auth/logout` are publicly mounted authentication mutations. They call Better Auth internally, so the library's credential and session implementation is retained without exposing registration, recovery, or provider endpoints. Staff administration is application-owned under `/api/settings/users` and requires `users.manage_secretaries` on every operation.
 
 The server session layer returns a deliberately small DTO containing user ID, name, normalized email, role, and session expiry. Password hashes, session tokens, throttle rows, and Better Auth internals never cross the server boundary.
+
+## Patient boundary
+
+The patient module owns strict administrative validation, explicit DTOs, bounded PostgreSQL queries, lifecycle rules, and transactional mutations. Initial list data is server-rendered. Interactive search uses an authenticated POST so personal search terms do not enter URLs. Database rows and internal normalization fields do not pass directly to client components.
+
+One application/database deployment is the V1 clinic boundary. There is no tenant selector or `clinic_id`; multi-clinic storage is unsupported and cannot be inferred from UUID opacity.
 
 ## Health model
 

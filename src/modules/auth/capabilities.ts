@@ -8,6 +8,8 @@ export const capabilities = [
   "patients.read_administrative",
   "patients.create",
   "patients.update_administrative",
+  "patients.archive",
+  "patients.restore",
   "appointments.read",
   "appointments.create",
   "appointments.update",

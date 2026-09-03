@@ -7,6 +7,8 @@ describe("capability policy", () => {
     expect(hasCapability("DOCTOR", "users.manage_secretaries")).toBe(true);
     expect(hasCapability("DOCTOR", "clinical_notes.read")).toBe(true);
     expect(getCapabilitiesForRole("DOCTOR")).toContain("prescriptions.finalize");
+    expect(hasCapability("DOCTOR", "patients.archive")).toBe(true);
+    expect(hasCapability("DOCTOR", "patients.restore")).toBe(true);
   });
 
   it("limits secretaries to the authenticated shell and administrative workflows", () => {
@@ -14,6 +16,8 @@ describe("capability policy", () => {
     expect(hasCapability("SECRETARY", "patients.read_administrative")).toBe(true);
     expect(hasCapability("SECRETARY", "appointments.update")).toBe(true);
     expect(hasCapability("SECRETARY", "users.manage_secretaries")).toBe(false);
+    expect(hasCapability("SECRETARY", "patients.archive")).toBe(false);
+    expect(hasCapability("SECRETARY", "patients.restore")).toBe(false);
     expect(hasCapability("SECRETARY", "consultations.read")).toBe(false);
     expect(hasCapability("SECRETARY", "clinical_notes.read")).toBe(false);
     expect(hasCapability("SECRETARY", "followups.read_sensitive")).toBe(false);
