@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 2 provides authentication, staff administration, and administrative patient records. Appointment and clinical domains are not implemented.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 3 provides authentication, staff administration, administrative patient records, and appointment scheduling. Clinical domains are not implemented.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -52,6 +52,12 @@ The server session layer returns a deliberately small DTO containing user ID, na
 The patient module owns strict administrative validation, explicit DTOs, bounded PostgreSQL queries, lifecycle rules, and transactional mutations. Initial list data is server-rendered. Interactive search uses an authenticated POST so personal search terms do not enter URLs. Database rows and internal normalization fields do not pass directly to client components.
 
 One application/database deployment is the V1 clinic boundary. There is no tenant selector or `clinic_id`; multi-clinic storage is unsupported and cannot be inferred from UUID opacity.
+
+## Appointment boundary
+
+The appointment module owns clinic-local time conversion, daily agenda boundaries, overlap detection, lifecycle policy, explicit administrative DTOs, and transactional mutations. The database stores UTC instants through `timestamptz`; `CLINIC_TIMEZONE` supplies the IANA interpretation boundary. Appointment reason text is short administrative context and must not contain clinical information.
+
+Overlap is a recalculated workflow warning rather than a uniqueness constraint because the one doctor may deliberately double-book. Appointment state and schedule changes use explicit versions. Cancellation and no-show preserve the record; no delete operation exists.
 
 ## Health model
 

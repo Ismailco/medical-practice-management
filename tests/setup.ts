@@ -4,3 +4,4 @@ process.env["BETTER_AUTH_SECRET"] ??= "synthetic-test-secret-at-least-thirty-two
 process.env["AUTH_ARGON2_MEMORY_KIB"] ??= "65536";
 process.env["AUTH_ARGON2_TIME_COST"] ??= "3";
 process.env["AUTH_ARGON2_PARALLELISM"] ??= "1";
+process.env["CLINIC_TIMEZONE"] ??= "Africa/Casablanca";

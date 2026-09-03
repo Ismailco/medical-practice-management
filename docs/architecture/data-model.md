@@ -1,8 +1,8 @@
 # Data model
 
-## Phase 2 state
+## Phase 3 state
 
-The database contains authentication/security infrastructure and one administrative `patient` domain table. No clinical tables or fields exist.
+The database contains authentication/security infrastructure plus administrative `patient` and `appointment` domain tables. No clinical tables or fields exist.
 
 The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
 
@@ -48,6 +48,16 @@ Patient archiving is an explicit lifecycle rule, not a generic soft-delete frame
 Search uses parameterized PostgreSQL predicates over patient number, case-insensitive display names, normalized phone, and normalized email. Wildcard characters are escaped, pages contain at most 20 rows, and archived rows are excluded unless deliberately requested. Search terms are sent in an authenticated POST body rather than a URL so names and contact identifiers do not enter routine URL access logs. No extension or external search service is required at the expected scale.
 
 Names remain modeled as required `first_name` and `last_name` fields for V1. This is a known international-name limitation and should be revisited only with a concrete workflow. Duplicate warnings, automated deduplication, and patient merging are deferred; names, phones, and emails are intentionally non-unique.
+
+## Appointments
+
+`appointment.id` is a UUID; a separate appointment number is unnecessary. `patient_id`, `created_by`, and optional `cancelled_by` use restrictive foreign keys so deleting related records cannot erase history. Start and end are `timestamptz` instants with a database constraint requiring end after start. Durations between 5 minutes and 8 hours are enforced at the application boundary. Administrative reason text is nullable and limited to 160 characters.
+
+Status is the bounded PostgreSQL enum `SCHEDULED`, `ARRIVED`, `IN_CONSULTATION`, `COMPLETED`, `CANCELLED`, or `NO_SHOW`. Cancellation actor/time must exist exactly when status is `CANCELLED`. Completed, cancelled, and no-show records are terminal and retained. `IN_CONSULTATION` is only an appointment workflow state until a later phase creates a Consultation entity.
+
+Schedule and lifecycle mutations require `version`; successful changes increment it atomically. Only scheduled appointments may be rescheduled. Overlap means `existing.start < candidate.end AND existing.end > candidate.start`, excluding completed, cancelled, and no-show records and allowing boundary-touching appointments. A conflict response is followed by explicit confirmation and server re-evaluation; overlaps are not a database uniqueness invariant.
+
+New appointments require an active patient. Existing appointments remain readable after patient archival. A patient cannot be archived while any appointment remains `SCHEDULED`, `ARRIVED`, or `IN_CONSULTATION`, regardless of its planned time. Staff must explicitly resolve stale workflow state; only completed, cancelled, and no-show appointments permit archival.
 
 ## Disclosure boundaries
 

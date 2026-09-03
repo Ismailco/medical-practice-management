@@ -4,22 +4,31 @@ import { notFound } from "next/navigation";
 import { PatientLifecycleButton } from "@/components/patient-lifecycle-button";
 import { hasCapability } from "@/modules/auth/capabilities";
 import { requirePageCapability } from "@/modules/auth/page";
+import { listPatientAppointments } from "@/modules/appointments/repository";
+import { formatClinicDateTime } from "@/modules/appointments/timezone";
+import { appointmentHistoryQuerySchema } from "@/modules/appointments/validation";
 import { findAdministrativePatientById } from "@/modules/patients/repository";
 import { patientIdSchema } from "@/modules/patients/validation";
 
-type PageContext = { params: Promise<{ id: string }> };
+type PageContext = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
+};
 
 function Value({ children }: { children: string | null }) {
   return <dd className="mt-1 whitespace-pre-line text-slate-950">{children ?? "—"}</dd>;
 }
 
-export default async function PatientPage({ params }: PageContext) {
+export default async function PatientPage({ params, searchParams }: PageContext) {
   const currentUser = await requirePageCapability("patients.read_administrative");
   const parsedId = patientIdSchema.safeParse((await params).id);
   if (!parsedId.success) notFound();
   const patient = await findAdministrativePatientById(parsedId.data);
   if (!patient) notFound();
   const archived = patient.archivedAt !== null;
+  const historyQuery = appointmentHistoryQuerySchema.safeParse(await searchParams);
+  const historyPage = historyQuery.success ? historyQuery.data.page : 1;
+  const appointmentHistory = await listPatientAppointments(patient.id, historyPage);
 
   return (
     <section className="max-w-5xl">
@@ -41,6 +50,14 @@ export default async function PatientPage({ params }: PageContext) {
           <p className="mt-2 font-mono text-sm text-slate-600">{patient.patientNumber}</p>
         </div>
         <div className="flex flex-wrap items-start gap-3">
+          {!archived ? (
+            <Link
+              className="rounded-md bg-teal-800 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-900"
+              href={`/appointments/new?patient=${patient.id}`}
+            >
+              Schedule appointment
+            </Link>
+          ) : null}
           {!archived ? (
             <Link
               className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-white"
@@ -97,6 +114,62 @@ export default async function PatientPage({ params }: PageContext) {
         Created {patient.createdAt.toISOString()} · Updated {patient.updatedAt.toISOString()} ·
         Version {patient.version}
       </p>
+
+      <div className="mt-10 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-slate-950">Appointments</h2>
+        <span className="text-sm text-slate-500">{appointmentHistory.total} total</span>
+      </div>
+      <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+        {appointmentHistory.items.length === 0 ? (
+          <li className="p-6 text-sm text-slate-600">No appointment history.</li>
+        ) : (
+          appointmentHistory.items.map((item) => (
+            <li
+              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              key={item.id}
+            >
+              <div>
+                <Link
+                  className="font-medium text-teal-800 hover:underline"
+                  href={`/appointments/${item.id}`}
+                >
+                  {formatClinicDateTime(new Date(item.scheduledStart))}
+                </Link>
+                {item.administrativeReason ? (
+                  <p className="mt-1 text-sm text-slate-600">{item.administrativeReason}</p>
+                ) : null}
+              </div>
+              <span className="text-sm font-medium text-slate-700">
+                {item.status.replaceAll("_", " ")}
+              </span>
+            </li>
+          ))
+        )}
+      </ul>
+      {appointmentHistory.totalPages > 1 ? (
+        <nav
+          aria-label="Appointment history pages"
+          className="mt-4 flex items-center justify-between"
+        >
+          <Link
+            aria-disabled={appointmentHistory.page <= 1}
+            className="text-sm font-medium text-teal-800 aria-disabled:pointer-events-none aria-disabled:text-slate-400"
+            href={`/patients/${patient.id}?page=${Math.max(1, appointmentHistory.page - 1)}`}
+          >
+            ← Previous
+          </Link>
+          <span className="text-sm text-slate-600">
+            Page {appointmentHistory.page} of {appointmentHistory.totalPages}
+          </span>
+          <Link
+            aria-disabled={appointmentHistory.page >= appointmentHistory.totalPages}
+            className="text-sm font-medium text-teal-800 aria-disabled:pointer-events-none aria-disabled:text-slate-400"
+            href={`/patients/${patient.id}?page=${Math.min(appointmentHistory.totalPages, appointmentHistory.page + 1)}`}
+          >
+            Next →
+          </Link>
+        </nav>
+      ) : null}
     </section>
   );
 }

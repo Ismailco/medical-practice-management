@@ -1,9 +1,9 @@
 import "server-only";
 
-import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { auditLog, patient } from "@/db/schema";
+import { appointment, auditLog, patient } from "@/db/schema";
 import { ConflictError, NotFoundError } from "@/modules/auth/errors";
 import { toAdministrativePatient, type AdministrativePatient } from "./dto";
 import {
@@ -124,6 +124,38 @@ export async function changePatientArchiveState(
   const archive = parsed.action === "archive";
 
   return db.transaction(async (transaction) => {
+    const [current] = await transaction
+      .select({ version: patient.version, archivedAt: patient.archivedAt })
+      .from(patient)
+      .where(eq(patient.id, patientId))
+      .limit(1)
+      .for("update");
+    if (!current) throw new NotFoundError();
+    if (current.version !== parsed.expectedVersion) {
+      throw new ConflictError("This patient changed or is already in the requested state.");
+    }
+    if (archive !== (current.archivedAt === null)) {
+      throw new ConflictError("This patient changed or is already in the requested state.");
+    }
+
+    if (archive) {
+      const [futureAppointment] = await transaction
+        .select({ id: appointment.id })
+        .from(appointment)
+        .where(
+          and(
+            eq(appointment.patientId, patientId),
+            inArray(appointment.status, ["SCHEDULED", "ARRIVED", "IN_CONSULTATION"]),
+          ),
+        )
+        .limit(1);
+      if (futureAppointment) {
+        throw new ConflictError(
+          "Resolve the patient's non-terminal appointments before archiving the record.",
+        );
+      }
+    }
+
     const expectedState = archive ? isNull(patient.archivedAt) : isNotNull(patient.archivedAt);
     const [updated] = await transaction
       .update(patient)
@@ -139,12 +171,6 @@ export async function changePatientArchiveState(
       .returning();
 
     if (!updated) {
-      const [existing] = await transaction
-        .select({ id: patient.id })
-        .from(patient)
-        .where(eq(patient.id, patientId))
-        .limit(1);
-      if (!existing) throw new NotFoundError();
       throw new ConflictError("This patient changed or is already in the requested state.");
     }
 

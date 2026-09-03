@@ -13,6 +13,8 @@ export const capabilities = [
   "appointments.read",
   "appointments.create",
   "appointments.update",
+  "appointments.transition",
+  "appointments.transition_visit",
   "consultations.read",
   "consultations.write",
   "clinical_notes.read",
@@ -36,6 +38,7 @@ const secretaryCapabilities = new Set<Capability>([
   "appointments.read",
   "appointments.create",
   "appointments.update",
+  "appointments.transition",
 ]);
 
 const doctorCapabilities = new Set<Capability>(capabilities);

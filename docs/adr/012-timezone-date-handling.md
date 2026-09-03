@@ -10,7 +10,7 @@ Appointments represent instants, while birth dates and follow-up due dates are c
 
 ## Decision
 
-Store instants in PostgreSQL `timestamptz`, exchange them as ISO 8601 values, and display them using the clinic's IANA timezone. Store calendar-only values as `date`. Default initial clinic configuration to `Africa/Casablanca`, not a hard-coded offset.
+Store instants in PostgreSQL `timestamptz`, exchange them as ISO 8601 values, and display them using the clinic's IANA timezone. Store calendar-only values as `date`. `CLINIC_TIMEZONE` is required and validated at startup; the development example is `Africa/Casablanca`, not a hard-coded offset. Use `date-fns-tz` for local-time conversion and calculate each local day boundary separately so daylight-saving days need not contain 24 hours.
 
 ## Consequences
 

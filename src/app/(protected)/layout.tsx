@@ -21,6 +21,9 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
             <Link className="text-sm text-slate-600 hover:text-slate-950" href="/patients">
               Patients
             </Link>
+            <Link className="text-sm text-slate-600 hover:text-slate-950" href="/appointments">
+              Appointments
+            </Link>
             {hasCapability(currentSession.user.role, "users.manage_secretaries") ? (
               <Link className="text-sm text-slate-600 hover:text-slate-950" href="/settings/users">
                 Staff accounts

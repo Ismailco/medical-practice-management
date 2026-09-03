@@ -37,6 +37,18 @@ export const auditAction = pgEnum("audit_action", [
   "PATIENT_ADMIN_UPDATED",
   "PATIENT_ARCHIVED",
   "PATIENT_RESTORED",
+  "APPOINTMENT_CREATED",
+  "APPOINTMENT_RESCHEDULED",
+  "APPOINTMENT_STATUS_CHANGED",
+]);
+
+export const appointmentStatus = pgEnum("appointment_status", [
+  "SCHEDULED",
+  "ARRIVED",
+  "IN_CONSULTATION",
+  "COMPLETED",
+  "CANCELLED",
+  "NO_SHOW",
 ]);
 
 export const patientNumberSequence = pgSequence("patient_number_seq", {
@@ -256,6 +268,43 @@ export const patient = pgTable(
     check(
       "patient_archive_pair_check",
       sql`(${table.archivedAt} IS NULL) = (${table.archivedBy} IS NULL)`,
+    ),
+  ],
+);
+
+export const appointment = pgTable(
+  "appointment",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "restrict" }),
+    scheduledStart: timestamp("scheduled_start", { withTimezone: true }).notNull(),
+    scheduledEnd: timestamp("scheduled_end", { withTimezone: true }).notNull(),
+    status: appointmentStatus("status").default("SCHEDULED").notNull(),
+    administrativeReason: text("administrative_reason"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    version: integer("version").default(1).notNull(),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledBy: uuid("cancelled_by").references(() => user.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    index("appointment_scheduled_start_idx").on(table.scheduledStart),
+    index("appointment_patient_start_idx").on(table.patientId, table.scheduledStart),
+    index("appointment_status_start_idx").on(table.status, table.scheduledStart),
+    check("appointment_time_order_check", sql`${table.scheduledEnd} > ${table.scheduledStart}`),
+    check("appointment_version_positive_check", sql`${table.version} >= 1`),
+    check(
+      "appointment_reason_length_check",
+      sql`${table.administrativeReason} IS NULL OR length(${table.administrativeReason}) <= 160`,
+    ),
+    check(
+      "appointment_cancellation_metadata_check",
+      sql`(${table.status} = 'CANCELLED') = (${table.cancelledAt} IS NOT NULL AND ${table.cancelledBy} IS NOT NULL)`,
     ),
   ],
 );

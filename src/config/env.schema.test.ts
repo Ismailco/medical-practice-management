@@ -7,6 +7,7 @@ const validEnvironment: NodeJS.ProcessEnv = {
   APP_URL: "http://localhost:3000",
   DATABASE_URL: "postgresql://user:password@localhost:5432/database",
   BETTER_AUTH_SECRET: "unit-test-only-secret-value-at-least-32-characters",
+  CLINIC_TIMEZONE: "Africa/Casablanca",
 };
 
 describe("parseEnvironment", () => {
@@ -18,6 +19,15 @@ describe("parseEnvironment", () => {
       AUTH_ARGON2_PARALLELISM: 1,
       AUTH_TRUSTED_PROXY_CIDRS: "",
     });
+  });
+
+  it("requires a valid IANA clinic timezone", () => {
+    expect(parseEnvironment({ ...validEnvironment, CLINIC_TIMEZONE: "UTC" }).CLINIC_TIMEZONE).toBe(
+      "UTC",
+    );
+    expect(() =>
+      parseEnvironment({ ...validEnvironment, CLINIC_TIMEZONE: "not-a-timezone" }),
+    ).toThrow(/CLINIC_TIMEZONE must be a valid IANA timezone/);
   });
 
   it("rejects a missing database URL with a clear error", () => {

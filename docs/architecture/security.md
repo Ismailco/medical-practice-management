@@ -18,6 +18,7 @@ Security is a system property, not a production-readiness claim. The V1 reposito
 - Credentials use Argon2id. Defaults are 65,536 KiB memory, 3 iterations, and parallelism 1.
 - Session cookies are HttpOnly and SameSite=Lax, and are Secure when `APP_URL` is HTTPS.
 - All application-owned authentication, staff-account, and patient mutations require an exact trusted `Origin`.
+- All appointment search and mutations require an authenticated session; mutations and patient-picker searches require an exact trusted `Origin`.
 - Login throttles are PostgreSQL-backed and survive application restarts.
 
 Nonce-based CSP makes application rendering dynamic. This is an accepted trade-off for a future authenticated application containing sensitive information. New third-party origins require explicit review; do not weaken CSP globally to accommodate them.
@@ -42,9 +43,13 @@ Patient mutation inputs are strict Zod objects and database writes enumerate acc
 
 Patient search terms are carried in a same-origin authenticated POST body, not the URL, because names, phone numbers, and emails in query strings would commonly enter proxy and access logs. Request-body logging remains prohibited.
 
+Appointment input uses strict schemas and dedicated create, reschedule, and transition operations. Clients cannot set initial status, creator, audit actor, or arbitrary appointment fields. Appointment DTOs contain only the administrative patient identity and schedule fields needed by staff. Patient-picker terms use a same-origin POST and are not placed in URLs. The optional administrative reason is not a clinical-notes field and must not be used for sensitive clinical content.
+
+Secretary and doctor appointment capabilities are explicit. Both manage ordinary scheduling and administrative transitions; only the doctor has `appointments.transition_visit` for `IN_CONSULTATION` and `COMPLETED`. The server recalculates overlaps even after client confirmation and applies optimistic concurrency to reschedules and transitions.
+
 ## Security audit events
 
-The `audit_log` records authentication outcomes, staff-account lifecycle actions, and patient create/update/archive/restore mutations. Patient metadata is limited to changed field names, resulting version, and archival state. It excludes patient values, names, birth dates, contact details, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
+The `audit_log` records authentication outcomes, staff-account lifecycle actions, patient mutations, and appointment creation/reschedule/status changes. Appointment metadata is limited to status names, changed field names, resulting version, and whether an overlap was explicitly confirmed. It excludes patient identity, reason text, exact schedule timestamps, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
 
 ## Logging rules
 

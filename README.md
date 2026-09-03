@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 2: Patient Administrative Records** is implemented. Doctors and secretaries can create, find, view, and update administrative patient records. Doctors can additionally archive and restore patients. Scheduling, consultations, notes, follow-ups, prescriptions, and all clinical workflows are not implemented.
+**Phase 3: Appointment Scheduling and Daily Agenda** is implemented. Authenticated staff can manage administrative patient records and appointments. The doctor additionally controls patient archival and visit-state transitions. Consultations, notes, follow-ups, prescriptions, and all clinical-record workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -63,6 +63,7 @@ Stop the database with `docker compose down`. Add `--volumes` only when intentio
 | `AUTH_ARGON2_TIME_COST`    | Argon2id iteration cost; defaults to 3                        |
 | `AUTH_ARGON2_PARALLELISM`  | Argon2id parallelism; defaults to 1                           |
 | `AUTH_TRUSTED_PROXY_CIDRS` | Optional comma-separated trusted proxy CIDRs                  |
+| `CLINIC_TIMEZONE`          | IANA timezone used for appointment entry and daily agendas    |
 | `POSTGRES_DB`              | Local Compose database name                                   |
 | `POSTGRES_USER`            | Local Compose database user                                   |
 | `POSTGRES_PASSWORD`        | Local Compose database password                               |
@@ -78,7 +79,7 @@ pnpm start           # run the production build
 pnpm lint            # ESLint
 pnpm typecheck       # strict TypeScript check
 pnpm test            # test suite once
-pnpm test:integration # PostgreSQL-backed auth and patient tests (isolated test DB)
+pnpm test:integration # PostgreSQL-backed auth, patient, and appointment tests
 pnpm test:watch      # test suite in watch mode
 pnpm format          # format files
 pnpm format:check    # verify formatting
@@ -104,6 +105,12 @@ The configured `APP_URL` must match the browser-facing origin. Production ingres
 
 Both roles can create and edit active records. Only the doctor can archive or restore a patient. Archiving preserves the UUID and patient number, hides the record from default searches, and prevents ordinary editing until restoration.
 
+## Appointment scheduling
+
+`/appointments` provides a clinic-timezone daily agenda, date navigation, and a bounded seven-day upcoming list. Staff create appointments through an active-patient search, reschedule only while scheduled, and use explicit lifecycle operations. The doctor alone can move an arrived appointment into `IN_CONSULTATION` and then `COMPLETED`; this Phase 3 state does not create a clinical Consultation record.
+
+Times are entered in `CLINIC_TIMEZONE` and stored as PostgreSQL `timestamptz` instants. Overlaps use half-open intervals and return a server-calculated warning; an authorized user must explicitly confirm before the server rechecks and accepts the double-booking. Appointments are never deleted. Every appointment must be terminal before its patient can be archived, including operationally stale appointments whose planned end has passed.
+
 ## Project structure
 
 ```text
@@ -113,6 +120,7 @@ src/db/             database client and schema entrypoint
 src/modules/auth/   authentication, sessions, throttling, capabilities
 src/modules/users/  staff-account validation and services
 src/modules/patients/ administrative patient validation, DTOs, queries, services
+src/modules/appointments/ scheduling, timezone, lifecycle, DTOs, queries, services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -120,7 +128,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-No appointment or clinical domain modules exist. They will be added only when their phases are approved.
+No clinical domain modules exist. They will be added only when their phases are approved.
 
 ## Documentation
 

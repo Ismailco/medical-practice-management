@@ -9,12 +9,15 @@ describe("capability policy", () => {
     expect(getCapabilitiesForRole("DOCTOR")).toContain("prescriptions.finalize");
     expect(hasCapability("DOCTOR", "patients.archive")).toBe(true);
     expect(hasCapability("DOCTOR", "patients.restore")).toBe(true);
+    expect(hasCapability("DOCTOR", "appointments.transition_visit")).toBe(true);
   });
 
   it("limits secretaries to the authenticated shell and administrative workflows", () => {
     expect(hasCapability("SECRETARY", "shell.access")).toBe(true);
     expect(hasCapability("SECRETARY", "patients.read_administrative")).toBe(true);
     expect(hasCapability("SECRETARY", "appointments.update")).toBe(true);
+    expect(hasCapability("SECRETARY", "appointments.transition")).toBe(true);
+    expect(hasCapability("SECRETARY", "appointments.transition_visit")).toBe(false);
     expect(hasCapability("SECRETARY", "users.manage_secretaries")).toBe(false);
     expect(hasCapability("SECRETARY", "patients.archive")).toBe(false);
     expect(hasCapability("SECRETARY", "patients.restore")).toBe(false);

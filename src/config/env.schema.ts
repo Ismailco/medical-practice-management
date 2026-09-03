@@ -35,6 +35,14 @@ const environmentSchema = z
     AUTH_ARGON2_TIME_COST: integerFromEnvironment(2, 10).default(3),
     AUTH_ARGON2_PARALLELISM: integerFromEnvironment(1, 16).default(1),
     AUTH_TRUSTED_PROXY_CIDRS: z.string().default(""),
+    CLINIC_TIMEZONE: z.string().refine((value) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: value }).format();
+        return true;
+      } catch {
+        return false;
+      }
+    }, "CLINIC_TIMEZONE must be a valid IANA timezone"),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === "production" && new URL(value.APP_URL).protocol !== "https:") {
