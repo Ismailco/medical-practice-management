@@ -1,8 +1,12 @@
 # Planned data model
 
-## Phase 0 state
+## Phase 1 state
 
-No application domain tables exist yet. Drizzle is configured with an intentionally empty schema so each owning implementation phase can introduce reviewed tables and migrations.
+The database contains only authentication and security infrastructure. `auth_user`, `auth_session`, `auth_account`, `auth_verification`, and `auth_rate_limit` follow Better Auth's required schema. The application adds role/active fields to `auth_user`, plus `login_throttle` and `audit_log`.
+
+The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
+
+Sessions and accounts cascade when their user is removed. Audit actor references use `SET NULL` to preserve history, although user deletion is not an exposed V1 operation. Audit rows reject update and delete through a trigger. Login identifiers are unique case-insensitively and constrained to their normalized lowercase form.
 
 ## Conventions
 
@@ -19,16 +23,17 @@ No application domain tables exist yet. Drizzle is configured with an intentiona
 
 ## Planned entities by phase
 
-| Area                       | Planned entities                                                              | Phase |
-| -------------------------- | ----------------------------------------------------------------------------- | ----: |
-| Clinic identity and access | Clinic, User, DoctorProfile, auth session/account tables, AuditLog foundation |     1 |
-| Patient administration     | Patient                                                                       |     2 |
-| Scheduling                 | Appointment                                                                   |     3 |
-| Clinical records           | Consultation, ClinicalNote, ClinicalNoteRevision                              |     4 |
-| Follow-up work             | FollowUp                                                                      |     5 |
-| Prescribing                | Prescription, PrescriptionItem, DocumentCounter                               |     6 |
+| Area                   | Planned entities                                                       | Phase |
+| ---------------------- | ---------------------------------------------------------------------- | ----: |
+| Identity and access    | User, auth session/account tables, login throttle, AuditLog foundation |     1 |
+| Clinic configuration   | Clinic, DoctorProfile                                                  | Later |
+| Patient administration | Patient                                                                |     2 |
+| Scheduling             | Appointment                                                            |     3 |
+| Clinical records       | Consultation, ClinicalNote, ClinicalNoteRevision                       |     4 |
+| Follow-up work         | FollowUp                                                               |     5 |
+| Prescribing            | Prescription, PrescriptionItem, DocumentCounter                        |     6 |
 
-The initial Patient model will not contain a sex or gender field. It will be added only if a concrete clinical workflow justifies collecting it.
+Clinic and doctor-profile tables were deliberately deferred: authentication does not require them, and Phase 1 must not introduce a premature clinic domain. Future business tables still follow ADR-005 clinic scoping. The initial Patient model will not contain a sex or gender field.
 
 ## Disclosure boundaries
 

@@ -14,17 +14,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen",
+    "typecheck": "pnpm typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "auth:create-doctor": "tsx --conditions=react-server scripts/auth-create-doctor.ts",
+    "auth:reset-doctor-password": "tsx --conditions=react-server scripts/auth-reset-doctor-password.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "2.2.0",
+    "better-auth": "1.7.2",
     "drizzle-orm": "0.45.2",
     "next": "16.2.11",
     "postgres": "3.4.7",
@@ -44,6 +50,7 @@
     "eslint-config-next": "16.2.11",
     "prettier": "3.9.6",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vitest": "4.0.17"
   }

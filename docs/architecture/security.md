@@ -14,8 +14,33 @@ Security is a system property, not a production-readiness claim. The V1 reposito
 - A per-request nonce-based Content Security Policy is established at the Next.js proxy boundary.
 - Production CSP upgrades insecure subresource requests.
 - Logs are structured JSON with an intentionally narrow context type.
+- Better Auth stores opaque sessions in PostgreSQL; authorization does not rely on client-held role claims.
+- Credentials use Argon2id. Defaults are 65,536 KiB memory, 3 iterations, and parallelism 1.
+- Session cookies are HttpOnly and SameSite=Lax, and are Secure when `APP_URL` is HTTPS.
+- All application-owned authentication and staff-account mutations require an exact trusted `Origin`.
+- Login throttles are PostgreSQL-backed and survive application restarts.
 
 Nonce-based CSP makes application rendering dynamic. This is an accepted trade-off for a future authenticated application containing sensitive information. New third-party origins require explicit review; do not weaken CSP globally to accommodate them.
+
+## Authentication controls
+
+Email is a normalized login identifier only. Email verification, email delivery, public registration, public recovery, and social login are disabled. Passwords accept 12 through 128 characters without composition rules. Production operators should benchmark Argon2id on their deployment hardware and increase memory or time cost while keeping authentication latency operationally acceptable; changes affect new hashes and password resets.
+
+Sessions expire eight hours after issuance and can be refreshed in the database after 30 minutes of activity. Cookie session caching is disabled, so the database remains authoritative. Disabling a secretary deletes all their sessions in the same transaction. Every protected request also re-reads the user and expiry; an inactive user is rejected and any remaining sessions are removed.
+
+SameSite=Lax prevents cookies on most cross-site subrequests. Better Auth additionally checks trusted origins and request metadata on its authentication operations. Application-owned state-changing routes require an exact `Origin` match against `APP_URL`. This assumes browsers provide `Origin` for these fetch requests and that operators configure the canonical origin correctly. CSP `form-action 'self'` adds defense in depth but is not the CSRF control.
+
+Better Auth's database limiter atomically limits sign-in requests by client-IP/path. A second application table counts failed attempts by an HMAC of normalized identifier plus client IP and blocks after five failures in 15 minutes. It stores neither plaintext email nor IP. The pair limiter is intentionally skipped when production receives no trustworthy single client address, avoiding an easy global account lockout; Better Auth's IP limiter still applies. Production ingress must overwrite forwarded headers, prevent direct application access, and configure trusted proxies. Expired pair records are removed opportunistically; scheduled cleanup may be added later.
+
+There is no self-service recovery. The doctor manages secretary credentials through an authorized operation. Initial doctor creation and doctor recovery use interactive operator commands. All password changes revoke the affected sessions.
+
+## Authorization controls
+
+Roles are `DOCTOR` and `SECRETARY`, but services authorize named capabilities through centralized policy. Secretary capabilities are limited to the shell and future patient-administrative/appointment operations. No consultation, clinical-note, sensitive follow-up, prescription, audit, or staff-administration capability is granted. Better Auth role and active fields reject client input, and secretary creation hard-codes the role server-side.
+
+## Security audit events
+
+The minimal `audit_log` records authentication outcomes and staff-account lifecycle actions. Metadata is allow-listed by each call and excludes credentials, cookies, tokens, request bodies, and raw login identifiers. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
 
 ## Logging rules
 

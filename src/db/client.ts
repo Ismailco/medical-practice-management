@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import { env } from "@/config/env";
+import * as schema from "@/db/schema";
 
 type SqlClient = ReturnType<typeof postgres>;
 
@@ -23,7 +24,9 @@ if (env.NODE_ENV !== "production") {
   globalThis.__clinicSqlClient = sqlClient;
 }
 
-export const db = drizzle(sqlClient);
+export const db = drizzle(sqlClient, { schema });
+
+export { sqlClient };
 
 export async function checkDatabaseConnection(): Promise<void> {
   await sqlClient`select 1`;

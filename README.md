@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-Only **Phase 0: Foundation** is implemented. There is no authentication, patient management, scheduling, consultation, follow-up, prescription, or other business functionality yet.
+**Phase 1: Authentication and Authorization** is implemented. The application has a protected shell, database sessions, doctor bootstrap tooling, and doctor-managed secretary accounts. Patient management, scheduling, consultations, notes, follow-ups, prescriptions, and other medical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -21,7 +21,7 @@ This project is not production-ready healthcare software. A real deployment requ
 - Vitest
 - pnpm
 
-Authentication is intentionally deferred to Phase 1.
+- Better Auth database sessions with explicit Argon2id password hashing
 
 ## Requirements
 
@@ -34,8 +34,10 @@ Authentication is intentionally deferred to Phase 1.
 ```bash
 pnpm install
 cp .env.example .env
+# Replace BETTER_AUTH_SECRET with: openssl rand -base64 32
 docker compose up -d
 pnpm db:migrate
+pnpm auth:create-doctor
 pnpm dev
 ```
 
@@ -52,14 +54,19 @@ Stop the database with `docker compose down`. Add `--volumes` only when intentio
 
 ## Environment configuration
 
-| Variable            | Purpose                                                       |
-| ------------------- | ------------------------------------------------------------- |
-| `NODE_ENV`          | `development`, `test`, or `production`                        |
-| `APP_URL`           | Canonical application origin                                  |
-| `DATABASE_URL`      | PostgreSQL connection URL used by the application and Drizzle |
-| `POSTGRES_DB`       | Local Compose database name                                   |
-| `POSTGRES_USER`     | Local Compose database user                                   |
-| `POSTGRES_PASSWORD` | Local Compose database password                               |
+| Variable                   | Purpose                                                       |
+| -------------------------- | ------------------------------------------------------------- |
+| `NODE_ENV`                 | `development`, `test`, or `production`                        |
+| `APP_URL`                  | Exact canonical origin used for cookies and origin checks     |
+| `DATABASE_URL`             | PostgreSQL connection URL used by the application and Drizzle |
+| `BETTER_AUTH_SECRET`       | Random application secret; generate separately per deployment |
+| `AUTH_ARGON2_MEMORY_KIB`   | Argon2id memory cost; defaults to 65,536 KiB                  |
+| `AUTH_ARGON2_TIME_COST`    | Argon2id iteration cost; defaults to 3                        |
+| `AUTH_ARGON2_PARALLELISM`  | Argon2id parallelism; defaults to 1                           |
+| `AUTH_TRUSTED_PROXY_CIDRS` | Optional comma-separated trusted proxy CIDRs                  |
+| `POSTGRES_DB`              | Local Compose database name                                   |
+| `POSTGRES_USER`            | Local Compose database user                                   |
+| `POSTGRES_PASSWORD`        | Local Compose database password                               |
 
 Application environment variables are validated at server startup. Server configuration is kept outside the `NEXT_PUBLIC_` namespace so it cannot be intentionally bundled for browser use.
 
@@ -72,6 +79,7 @@ pnpm start           # run the production build
 pnpm lint            # ESLint
 pnpm typecheck       # strict TypeScript check
 pnpm test            # test suite once
+pnpm test:integration # PostgreSQL-backed authentication tests (isolated test DB)
 pnpm test:watch      # test suite in watch mode
 pnpm format          # format files
 pnpm format:check    # verify formatting
@@ -79,9 +87,17 @@ pnpm db:generate     # generate a reviewed migration from schema changes
 pnpm db:migrate      # apply checked-in migrations
 pnpm db:check        # validate migration history
 pnpm db:studio       # local Drizzle Studio
+pnpm auth:create-doctor # interactively bootstrap the one doctor
+pnpm auth:reset-doctor-password # operator recovery for the doctor account
 ```
 
 Do not use runtime schema synchronization in production. Every schema change must be represented by a reviewed migration.
+
+## Authentication and account recovery
+
+There is no public registration, public password reset, email verification, or social login. Bootstrap the single doctor with `pnpm auth:create-doctor`; password entry is hidden on an interactive terminal. The doctor creates, disables, re-enables, and resets secretary credentials at `/settings/users`. Operator recovery for the doctor uses `pnpm auth:reset-doctor-password`. Passwords are set directly and are never emailed or displayed after submission.
+
+The configured `APP_URL` must match the browser-facing origin. Production ingress must terminate HTTPS, prevent direct origin access, and replace—not append untrusted values to—the forwarded client-IP header. See the security architecture for session, CSRF, proxy, and throttle details.
 
 ## Project structure
 
@@ -89,6 +105,8 @@ Do not use runtime schema synchronization in production. Every schema change mus
 src/app/            Next.js routes and layouts
 src/config/         validated server configuration
 src/db/             database client and schema entrypoint
+src/modules/auth/   authentication, sessions, throttling, capabilities
+src/modules/users/  staff-account validation and services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -96,7 +114,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Future domain code will live in `src/modules/` and be added only when its implementation phase begins.
+Only authentication/security modules exist today. Future business modules will be added when their phases are approved.
 
 ## Documentation
 

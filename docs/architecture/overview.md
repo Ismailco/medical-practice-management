@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, initially one doctor, and one or more secretaries. Phase 0 contains infrastructure only. Authentication starts in Phase 1; business domains are not implemented.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 1 provides authentication, authorization, and staff administration. Business domains are not implemented.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -29,10 +29,10 @@ Server Components are the default. Client Components are reserved for stateful b
 
 ## Request flow
 
-Future protected operations follow this order:
+Protected operations follow this order:
 
 1. Authenticate a database-backed session.
-2. Confirm the user is active and belongs to the clinic.
+2. Re-read the user and confirm the account is active. Clinic scoping begins with business tables in Phase 2.
 3. Validate external input.
 4. Authorize a named capability and resource.
 5. Run the domain service and database transaction.
@@ -40,6 +40,12 @@ Future protected operations follow this order:
 7. Return a minimal DTO.
 
 UI visibility is not an authorization control.
+
+## Authentication boundary
+
+Only `/api/auth/login` and `/api/auth/logout` are publicly mounted authentication mutations. They call Better Auth internally, so the library's credential and session implementation is retained without exposing registration, recovery, or provider endpoints. Staff administration is application-owned under `/api/settings/users` and requires `users.manage_secretaries` on every operation.
+
+The server session layer returns a deliberately small DTO containing user ID, name, normalized email, role, and session expiry. Password hashes, session tokens, throttle rows, and Better Auth internals never cross the server boundary.
 
 ## Health model
 
