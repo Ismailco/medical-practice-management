@@ -23,7 +23,7 @@ These rules apply to all work in this repository.
 - Never weaken authorization to make a test pass.
 - Do not expose database rows directly to clients. Return purpose-specific DTOs.
 - Pass only the minimum patient information required to browser components.
-- Treat future clinical information as sensitive by default.
+- Treat clinical information as sensitive by default. Never place it in administrative DTOs, URLs, browser storage, audit metadata, or shared caches.
 - THIS REPOSITORY MUST NEVER CONTAIN REAL PATIENT DATA. Seeds, tests, screenshots, and examples must be wholly synthetic and must not copy identifiable people.
 
 ## Database
@@ -33,7 +33,7 @@ These rules apply to all work in this repository.
 - No destructive schema modification without explicit review and a recovery plan.
 - Make every foreign-key deletion action intentional.
 - Do not add soft-delete columns mechanically; choose deletion behavior per resource.
-- Finalized historical records must respect their approved immutability rules once implemented.
+- Clinical-note revisions and addenda are append-only. Finalized consultations and their identity/final revision are immutable.
 
 ## Testing
 
@@ -47,9 +47,10 @@ These rules apply to all work in this repository.
 
 - Implement only the explicitly approved phase. Do not prepare product features from later phases.
 - Do not add Redis, Kafka, Kubernetes, Elasticsearch, GraphQL, microservices, or comparable infrastructure without an approved ADR.
-- Authentication, administrative patient records, and appointment scheduling are implemented. Consultation, note, follow-up, and prescription functionality belongs to later approved phases.
+- Authentication, administrative patient records, appointment scheduling, and doctor-only consultations/clinical-note history are implemented. Follow-up and prescription functionality belongs to later approved phases.
 - Keep the Patient module administrative-only. Do not add generic notes, metadata, or clinical fields to patient records.
 - Patient numbers are immutable; patient updates and lifecycle changes must preserve optimistic-concurrency checks.
 - Appointment schedule/status changes require optimistic concurrency and the centralized lifecycle policy. Never delete appointment history or silently bypass overlap confirmation.
+- Clinical mutations must use the dedicated start, revision, finalization, and addendum operations. Never mutate prior revisions/addenda or bypass linked appointment completion through a generic status update.
 - Do not expose public registration, email recovery, or Better Auth's complete catch-all route without a new approved requirement and security review.
 - Create staff through application services: the operator CLI creates the single doctor and authorized doctors create secretaries. Never accept a role from secretary-creation input.

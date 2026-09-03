@@ -18,7 +18,7 @@ Security is a system property, not a production-readiness claim. The V1 reposito
 - Credentials use Argon2id. Defaults are 65,536 KiB memory, 3 iterations, and parallelism 1.
 - Session cookies are HttpOnly and SameSite=Lax, and are Secure when `APP_URL` is HTTPS.
 - All application-owned authentication, staff-account, and patient mutations require an exact trusted `Origin`.
-- All appointment search and mutations require an authenticated session; mutations and patient-picker searches require an exact trusted `Origin`.
+- All appointment and consultation reads require an authenticated session and capability; mutations and search operations require an exact trusted `Origin`.
 - Login throttles are PostgreSQL-backed and survive application restarts.
 
 Nonce-based CSP makes application rendering dynamic. This is an accepted trade-off for a future authenticated application containing sensitive information. New third-party origins require explicit review; do not weaken CSP globally to accommodate them.
@@ -47,9 +47,13 @@ Appointment input uses strict schemas and dedicated create, reschedule, and tran
 
 Secretary and doctor appointment capabilities are explicit. Both manage ordinary scheduling and administrative transitions; only the doctor has `appointments.transition_visit` for `IN_CONSULTATION` and `COMPLETED`. The server recalculates overlaps even after client confirmation and applies optimistic concurrency to reschedules and transitions.
 
+Consultation and clinical-note capabilities are doctor-only. Authorization occurs before consultation lookup in transport adapters. Secretary navigation, patient pages, patient DTOs, and appointment DTOs contain no consultation count, identifier, state, diagnosis, note, or existence indicator. Strict dedicated operations are the only clinical mutation paths.
+
+Clinical responses use `Cache-Control: private, no-store` and `Pragma: no-cache`; clinical pages also receive the route-level private/no-store policy. Clinical text is plain text rendered through React escaping, never `dangerouslySetInnerHTML`, and is never stored in browser storage. Only the current editor snapshot is sent to its Client Component; history remains server rendered.
+
 ## Security audit events
 
-The `audit_log` records authentication outcomes, staff-account lifecycle actions, patient mutations, and appointment creation/reschedule/status changes. Appointment metadata is limited to status names, changed field names, resulting version, and whether an overlap was explicitly confirmed. It excludes patient identity, reason text, exact schedule timestamps, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
+The `audit_log` records authentication outcomes, staff-account lifecycle actions, patient and appointment mutations, consultation creation, revision creation, finalization, and addendum creation. Clinical metadata is allow-listed to lifecycle state, resulting version, revision number, and whether a consultation is appointment-linked. It excludes all clinical text, patient identity, appointment times, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
 
 ## Logging rules
 
@@ -85,6 +89,8 @@ HSTS is not emitted by the development application because advertising it from a
 TLS, encrypted database storage, and encrypted backups are the baseline for future production. They protect transport and lost storage media but do not protect against a compromised running application or an authorized database session.
 
 Application-level encryption of clinical fields is deferred until a deployment threat model and key-management design exist. If adopted, it must use maintained authenticated-encryption libraries and envelope keys held outside the database, preferably in a KMS or HSM. A static key beside the database password is not an acceptable substitute.
+
+Clinical revisions and addenda are plaintext at the application/database layer in V1. “Secure clinical notes” describes authorization, disclosure boundaries, no-store caching, append-only history, safe logging, and production encryption expectations; it is not a claim of end-to-end encryption or automatic legal compliance.
 
 ## Synthetic-data rule
 

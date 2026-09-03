@@ -10,6 +10,8 @@ describe("capability policy", () => {
     expect(hasCapability("DOCTOR", "patients.archive")).toBe(true);
     expect(hasCapability("DOCTOR", "patients.restore")).toBe(true);
     expect(hasCapability("DOCTOR", "appointments.transition_visit")).toBe(true);
+    expect(hasCapability("DOCTOR", "consultations.finalize")).toBe(true);
+    expect(hasCapability("DOCTOR", "clinical_notes.addendum")).toBe(true);
   });
 
   it("limits secretaries to the authenticated shell and administrative workflows", () => {
@@ -23,6 +25,8 @@ describe("capability policy", () => {
     expect(hasCapability("SECRETARY", "patients.restore")).toBe(false);
     expect(hasCapability("SECRETARY", "consultations.read")).toBe(false);
     expect(hasCapability("SECRETARY", "clinical_notes.read")).toBe(false);
+    expect(hasCapability("SECRETARY", "consultations.finalize")).toBe(false);
+    expect(hasCapability("SECRETARY", "clinical_notes.addendum")).toBe(false);
     expect(hasCapability("SECRETARY", "followups.read_sensitive")).toBe(false);
     expect(hasCapability("SECRETARY", "prescriptions.read")).toBe(false);
   });

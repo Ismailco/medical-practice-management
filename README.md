@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 3: Appointment Scheduling and Daily Agenda** is implemented. Authenticated staff can manage administrative patient records and appointments. The doctor additionally controls patient archival and visit-state transitions. Consultations, notes, follow-ups, prescriptions, and all clinical-record workflows are not implemented.
+**Phase 4: Consultations and Secure Clinical Notes** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, append-only clinical-note revisions, finalization, and addenda. Follow-ups, prescriptions, and later clinical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -79,7 +79,8 @@ pnpm start           # run the production build
 pnpm lint            # ESLint
 pnpm typecheck       # strict TypeScript check
 pnpm test            # test suite once
-pnpm test:integration # PostgreSQL-backed auth, patient, and appointment tests
+ALLOW_TEST_DATABASE_RESET=true DATABASE_URL=postgresql://.../clinic_integration_test pnpm test:integration
+                     # PostgreSQL-backed destructive integration tests; dedicated _test DB only
 pnpm test:watch      # test suite in watch mode
 pnpm format          # format files
 pnpm format:check    # verify formatting
@@ -92,6 +93,11 @@ pnpm auth:reset-doctor-password # operator recovery for the doctor account
 ```
 
 Do not use runtime schema synchronization in production. Every schema change must be represented by a reviewed migration.
+
+Integration tests reset their database between cases. The reset is guarded in code and runs only
+when `NODE_ENV=test`, `ALLOW_TEST_DATABASE_RESET=true`, and the parsed PostgreSQL database name ends
+in `_test` without production-like naming. Use a dedicated disposable database; the guard rejects
+the normal `clinic_demo` development database before issuing `TRUNCATE`.
 
 ## Authentication and account recovery
 
@@ -107,9 +113,15 @@ Both roles can create and edit active records. Only the doctor can archive or re
 
 ## Appointment scheduling
 
-`/appointments` provides a clinic-timezone daily agenda, date navigation, and a bounded seven-day upcoming list. Staff create appointments through an active-patient search, reschedule only while scheduled, and use explicit lifecycle operations. The doctor alone can move an arrived appointment into `IN_CONSULTATION` and then `COMPLETED`; this Phase 3 state does not create a clinical Consultation record.
+`/appointments` provides a clinic-timezone daily agenda, date navigation, and a bounded seven-day upcoming list. Staff create appointments through an active-patient search, reschedule only while scheduled, and use explicit lifecycle operations. The doctor starts a consultation from an arrived appointment. Consultation creation and the appointment transition to `IN_CONSULTATION` are atomic. Once linked, consultation finalization is the only path to `COMPLETED`, and both records change in one transaction.
 
 Times are entered in `CLINIC_TIMEZONE` and stored as PostgreSQL `timestamptz` instants. Overlaps use half-open intervals and return a server-calculated warning; an authorized user must explicitly confirm before the server rechecks and accepts the double-booking. Appointments are never deleted. Every appointment must be terminal before its patient can be archived, including operationally stale appointments whose planned end has passed.
+
+## Consultations and clinical notes
+
+Doctors can start a direct consultation for an active patient or start one from an arrived appointment. Consultation content is plain text and stored as complete, immutable revisions. Explicit finalization freezes the latest revision; later corrections are append-only addenda. A patient with an in-progress consultation cannot be archived.
+
+Clinical routes are doctor-only, use explicit clinical DTOs, and return private, no-store responses. Clinical values are excluded from application logs and audit metadata. Infrastructure-level encryption for storage and backups is required for a responsible production deployment; application field encryption is deliberately deferred until an external key-management design exists.
 
 ## Project structure
 
@@ -121,6 +133,7 @@ src/modules/auth/   authentication, sessions, throttling, capabilities
 src/modules/users/  staff-account validation and services
 src/modules/patients/ administrative patient validation, DTOs, queries, services
 src/modules/appointments/ scheduling, timezone, lifecycle, DTOs, queries, services
+src/modules/consultations/ doctor-only clinical DTOs, validation, queries, services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -128,7 +141,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-No clinical domain modules exist. They will be added only when their phases are approved.
+Follow-up, prescription, medication, attachment, and billing modules do not exist. They will be added only in explicitly approved later phases.
 
 ## Documentation
 

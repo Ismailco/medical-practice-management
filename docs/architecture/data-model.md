@@ -1,8 +1,8 @@
 # Data model
 
-## Phase 3 state
+## Phase 4 state
 
-The database contains authentication/security infrastructure plus administrative `patient` and `appointment` domain tables. No clinical tables or fields exist.
+The database contains authentication/security infrastructure, administrative patient and appointment records, and doctor-only consultation, clinical-note revision, and addendum records. No prescription, follow-up, medication, attachment, or billing structures exist.
 
 The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
 
@@ -29,7 +29,7 @@ Sessions and accounts cascade when their user is removed. Audit actor references
 | Clinic configuration   | Clinic, DoctorProfile                                                  | Later |
 | Patient administration | Patient                                                                |     2 |
 | Scheduling             | Appointment                                                            |     3 |
-| Clinical records       | Consultation, ClinicalNote, ClinicalNoteRevision                       |     4 |
+| Clinical records       | Consultation, ClinicalNoteRevision, ClinicalNoteAddendum               |     4 |
 | Follow-up work         | FollowUp                                                               |     5 |
 | Prescribing            | Prescription, PrescriptionItem, DocumentCounter                        |     6 |
 
@@ -53,19 +53,31 @@ Names remain modeled as required `first_name` and `last_name` fields for V1. Thi
 
 `appointment.id` is a UUID; a separate appointment number is unnecessary. `patient_id`, `created_by`, and optional `cancelled_by` use restrictive foreign keys so deleting related records cannot erase history. Start and end are `timestamptz` instants with a database constraint requiring end after start. Durations between 5 minutes and 8 hours are enforced at the application boundary. Administrative reason text is nullable and limited to 160 characters.
 
-Status is the bounded PostgreSQL enum `SCHEDULED`, `ARRIVED`, `IN_CONSULTATION`, `COMPLETED`, `CANCELLED`, or `NO_SHOW`. Cancellation actor/time must exist exactly when status is `CANCELLED`. Completed, cancelled, and no-show records are terminal and retained. `IN_CONSULTATION` is only an appointment workflow state until a later phase creates a Consultation entity.
+Status is the bounded PostgreSQL enum `SCHEDULED`, `ARRIVED`, `IN_CONSULTATION`, `COMPLETED`, `CANCELLED`, or `NO_SHOW`. Cancellation actor/time must exist exactly when status is `CANCELLED`. Completed, cancelled, and no-show records are terminal and retained. Starting a linked consultation atomically moves an arrived appointment to `IN_CONSULTATION`; finalizing that consultation atomically completes the appointment. Direct completion is rejected when a consultation is linked.
 
 Schedule and lifecycle mutations require `version`; successful changes increment it atomically. Only scheduled appointments may be rescheduled. Overlap means `existing.start < candidate.end AND existing.end > candidate.start`, excluding completed, cancelled, and no-show records and allowing boundary-touching appointments. A conflict response is followed by explicit confirmation and server re-evaluation; overlaps are not a database uniqueness invariant.
 
 New appointments require an active patient. Existing appointments remain readable after patient archival. A patient cannot be archived while any appointment remains `SCHEDULED`, `ARRIVED`, or `IN_CONSULTATION`, regardless of its planned time. Staff must explicitly resolve stale workflow state; only completed, cancelled, and no-show appointments permit archival.
 
+## Consultations and clinical-note history
+
+`consultation` records the stable patient, optional unique appointment, authoring doctor, start time, `IN_PROGRESS` or `FINALIZED` state, optimistic version, revision count, and finalized revision. Direct consultations have no appointment. Patient-row locking coordinates consultation start with archival; any `IN_PROGRESS` consultation blocks patient archival.
+
+Clinical content is not stored mutably on `consultation`. Each `clinical_note_revision` is a complete plain-text snapshot with a per-consultation number. The consultation row lock and stored revision count allocate numbers safely, while a unique `(consultation_id, revision_number)` index protects the sequence. A stale expected consultation version creates no revision.
+
+Finalization requires at least one revision and freezes the latest revision through `final_revision_id`. A composite foreign key guarantees that it belongs to the same consultation, and a trigger verifies its revision number matches the consultation revision count. State constraints require finalized timestamp and revision together. PostgreSQL triggers permit sequential revision inserts only while in progress and reject revision updates/deletes, consultation deletes, finalized consultation updates, and consultation identity changes.
+
+The migration does not fabricate consultations for pre-existing `IN_CONSULTATION` development rows. Such a legacy appointment remains explicitly resolvable through the appointment lifecycle, but once a consultation is linked only consultation finalization may complete it.
+
+`clinical_note_addendum` is available only after finalization. Addenda are non-empty bounded plain text and database triggers reject update/delete. If an addendum needs correction, another addendum must explain it.
+
 ## Disclosure boundaries
 
-Patient queries return explicit administrative DTOs. Internal search-normalization fields and archive actor IDs are not returned. Future consultation content, notes, diagnoses, prescription contents, and sensitive follow-up reasons must remain in separate module/query boundaries.
+Patient and appointment administrative queries return explicit DTOs and never gain consultation existence or content. Doctor-authorized clinical queries use separate summary and detail DTOs. Consultation summaries omit clinical snippets; detail DTOs contain clinical content only after capability enforcement. Prescription contents and sensitive follow-up reasons must remain in separate future boundaries.
 
 ## Historical integrity
 
-Finalized consultation and prescription records will be protected through service rules and database constraints or triggers. Clinical note changes will use append-only revisions. Issued prescription PDFs will be regenerated from an immutable issue snapshot and versioned renderer; PDF binaries are not stored in V1.
+Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Finalized prescriptions will receive equivalent history controls in their later phase. Issued prescription PDFs will be regenerated from an immutable issue snapshot and versioned renderer; PDF binaries are not stored in V1.
 
 ## Retention
 

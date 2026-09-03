@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 3 provides authentication, staff administration, administrative patient records, and appointment scheduling. Clinical domains are not implemented.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 4 provides authentication, staff administration, administrative patient records, appointment scheduling, and doctor-only consultations with immutable clinical-note history.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -32,7 +32,7 @@ Server Components are the default. Client Components are reserved for stateful b
 Protected operations follow this order:
 
 1. Authenticate a database-backed session.
-2. Re-read the user and confirm the account is active. Clinic scoping begins with business tables in Phase 2.
+2. Re-read the user and confirm the account is active.
 3. Validate external input.
 4. Authorize a named capability and resource.
 5. Run the domain service and database transaction.
@@ -58,6 +58,14 @@ One application/database deployment is the V1 clinic boundary. There is no tenan
 The appointment module owns clinic-local time conversion, daily agenda boundaries, overlap detection, lifecycle policy, explicit administrative DTOs, and transactional mutations. The database stores UTC instants through `timestamptz`; `CLINIC_TIMEZONE` supplies the IANA interpretation boundary. Appointment reason text is short administrative context and must not contain clinical information.
 
 Overlap is a recalculated workflow warning rather than a uniqueness constraint because the one doctor may deliberately double-book. Appointment state and schedule changes use explicit versions. Cancellation and no-show preserve the record; no delete operation exists.
+
+## Consultation boundary
+
+The consultation module owns doctor-only clinical validation, explicit clinical DTOs, transactional services, immutable revisions, finalization, and addenda. It never extends administrative patient or appointment DTOs with clinical existence or content.
+
+Starting from an appointment atomically creates the consultation and moves an arrived appointment to `IN_CONSULTATION`. Finalization freezes the current revision and completes the linked appointment in the same transaction. Direct consultations omit the appointment. Patient-row locking coordinates all starts with patient archival.
+
+Clinical pages are dynamically rendered with private, no-store cache policy. Server Components render history and finalized content as escaped plain text; only the active editor fields cross into a Client Component. No browser persistence or rich-text/HTML rendering is used.
 
 ## Health model
 

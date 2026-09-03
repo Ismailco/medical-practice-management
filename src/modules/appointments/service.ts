@@ -3,7 +3,7 @@ import "server-only";
 import { and, count, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { appointment, auditLog, patient } from "@/db/schema";
+import { appointment, auditLog, consultation, patient } from "@/db/schema";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/modules/auth/errors";
 import type { SafeUser } from "@/modules/auth/session";
 import { toAppointmentDto, type AppointmentDto } from "./dto";
@@ -212,6 +212,18 @@ export async function transitionAppointmentStatus(
       );
       if (validForDoctor) throw new ForbiddenError();
       throw new ConflictError("That appointment status transition is not allowed.");
+    }
+    if (parsed.targetStatus === "COMPLETED") {
+      const [linkedConsultation] = await transaction
+        .select({ id: consultation.id })
+        .from(consultation)
+        .where(eq(consultation.appointmentId, appointmentId))
+        .limit(1);
+      if (linkedConsultation) {
+        throw new ConflictError(
+          "A linked appointment completes only when its consultation is finalized.",
+        );
+      }
     }
 
     const cancelled = parsed.targetStatus === "CANCELLED";

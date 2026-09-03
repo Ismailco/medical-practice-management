@@ -40,11 +40,21 @@ export function AppointmentActions({
     setPending(targetStatus);
     setError(null);
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}/transition`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetStatus, expectedVersion: version }),
-      });
+      const startingConsultation = targetStatus === "IN_CONSULTATION";
+      const response = await fetch(
+        startingConsultation
+          ? "/api/consultations/from-appointment"
+          : `/api/appointments/${appointmentId}/transition`,
+        {
+          method: startingConsultation ? "POST" : "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            startingConsultation
+              ? { appointmentId, expectedAppointmentVersion: version }
+              : { targetStatus, expectedVersion: version },
+          ),
+        },
+      );
       const result: unknown = await response.json().catch(() => null);
       if (!response.ok) {
         const message =
@@ -56,6 +66,18 @@ export function AppointmentActions({
             : "Unable to change the appointment status.";
         setError(message);
         return;
+      }
+      if (
+        startingConsultation &&
+        result &&
+        typeof result === "object" &&
+        "consultation" in result &&
+        result.consultation &&
+        typeof result.consultation === "object" &&
+        "id" in result.consultation &&
+        typeof result.consultation.id === "string"
+      ) {
+        router.push(`/consultations/${result.consultation.id}`);
       }
       router.refresh();
     } catch {

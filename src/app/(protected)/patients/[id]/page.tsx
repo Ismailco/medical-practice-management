@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PatientLifecycleButton } from "@/components/patient-lifecycle-button";
+import { StartDirectConsultationButton } from "@/components/start-direct-consultation-button";
 import { hasCapability } from "@/modules/auth/capabilities";
 import { requirePageCapability } from "@/modules/auth/page";
 import { listPatientAppointments } from "@/modules/appointments/repository";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import { appointmentHistoryQuerySchema } from "@/modules/appointments/validation";
+import { listPatientConsultations } from "@/modules/consultations/repository";
 import { findAdministrativePatientById } from "@/modules/patients/repository";
 import { patientIdSchema } from "@/modules/patients/validation";
 
@@ -29,6 +31,8 @@ export default async function PatientPage({ params, searchParams }: PageContext)
   const historyQuery = appointmentHistoryQuerySchema.safeParse(await searchParams);
   const historyPage = historyQuery.success ? historyQuery.data.page : 1;
   const appointmentHistory = await listPatientAppointments(patient.id, historyPage);
+  const canReadConsultations = hasCapability(currentUser.role, "consultations.read");
+  const consultations = canReadConsultations ? await listPatientConsultations(patient.id) : [];
 
   return (
     <section className="max-w-5xl">
@@ -169,6 +173,37 @@ export default async function PatientPage({ params, searchParams }: PageContext)
             Next →
           </Link>
         </nav>
+      ) : null}
+
+      {canReadConsultations ? (
+        <section className="mt-10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-slate-950">Consultations</h2>
+            {!archived ? <StartDirectConsultationButton patientId={patient.id} /> : null}
+          </div>
+          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+            {consultations.length === 0 ? (
+              <li className="p-6 text-sm text-slate-600">No consultation history.</li>
+            ) : (
+              consultations.map((consultation) => (
+                <li
+                  className="flex items-center justify-between gap-3 px-4 py-3"
+                  key={consultation.id}
+                >
+                  <Link
+                    className="font-medium text-teal-800 hover:underline"
+                    href={`/consultations/${consultation.id}`}
+                  >
+                    {formatClinicDateTime(new Date(consultation.startedAt))}
+                  </Link>
+                  <span className="text-sm text-slate-700">
+                    {consultation.status === "IN_PROGRESS" ? "In progress" : "Finalized"}
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
       ) : null}
     </section>
   );

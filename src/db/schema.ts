@@ -40,6 +40,10 @@ export const auditAction = pgEnum("audit_action", [
   "APPOINTMENT_CREATED",
   "APPOINTMENT_RESCHEDULED",
   "APPOINTMENT_STATUS_CHANGED",
+  "CONSULTATION_CREATED",
+  "CLINICAL_NOTE_REVISION_CREATED",
+  "CONSULTATION_FINALIZED",
+  "CLINICAL_ADDENDUM_CREATED",
 ]);
 
 export const appointmentStatus = pgEnum("appointment_status", [
@@ -50,6 +54,8 @@ export const appointmentStatus = pgEnum("appointment_status", [
   "CANCELLED",
   "NO_SHOW",
 ]);
+
+export const consultationStatus = pgEnum("consultation_status", ["IN_PROGRESS", "FINALIZED"]);
 
 export const patientNumberSequence = pgSequence("patient_number_seq", {
   startWith: 1,
@@ -305,6 +311,114 @@ export const appointment = pgTable(
     check(
       "appointment_cancellation_metadata_check",
       sql`(${table.status} = 'CANCELLED') = (${table.cancelledAt} IS NOT NULL AND ${table.cancelledBy} IS NOT NULL)`,
+    ),
+  ],
+);
+
+export const consultation = pgTable(
+  "consultation",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "restrict" }),
+    appointmentId: uuid("appointment_id").references(() => appointment.id, {
+      onDelete: "restrict",
+    }),
+    doctorId: uuid("doctor_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    status: consultationStatus("status").default("IN_PROGRESS").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    finalizedAt: timestamp("finalized_at", { withTimezone: true }),
+    finalRevisionId: uuid("final_revision_id"),
+    revisionCount: integer("revision_count").default(0).notNull(),
+    version: integer("version").default(1).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("consultation_appointment_unique").on(table.appointmentId),
+    index("consultation_patient_started_idx").on(table.patientId, table.startedAt),
+    index("consultation_status_started_idx").on(table.status, table.startedAt),
+    index("consultation_doctor_started_idx").on(table.doctorId, table.startedAt),
+    check("consultation_version_positive_check", sql`${table.version} >= 1`),
+    check("consultation_revision_count_check", sql`${table.revisionCount} >= 0`),
+    check(
+      "consultation_finalization_state_check",
+      sql`(${table.status} = 'IN_PROGRESS' AND ${table.finalizedAt} IS NULL AND ${table.finalRevisionId} IS NULL) OR (${table.status} = 'FINALIZED' AND ${table.finalizedAt} IS NOT NULL AND ${table.finalRevisionId} IS NOT NULL)`,
+    ),
+  ],
+);
+
+export const clinicalNoteRevision = pgTable(
+  "clinical_note_revision",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    consultationId: uuid("consultation_id")
+      .notNull()
+      .references(() => consultation.id, { onDelete: "restrict" }),
+    revisionNumber: integer("revision_number").notNull(),
+    reasonForVisit: text("reason_for_visit"),
+    observations: text("observations"),
+    diagnosis: text("diagnosis"),
+    notes: text("notes"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("clinical_note_revision_number_unique").on(
+      table.consultationId,
+      table.revisionNumber,
+    ),
+    uniqueIndex("clinical_note_revision_consultation_id_unique").on(table.consultationId, table.id),
+    index("clinical_note_revision_created_at_idx").on(table.consultationId, table.createdAt),
+    check("clinical_note_revision_number_positive_check", sql`${table.revisionNumber} >= 1`),
+    check(
+      "clinical_note_revision_content_check",
+      sql`${table.reasonForVisit} IS NOT NULL OR ${table.observations} IS NOT NULL OR ${table.diagnosis} IS NOT NULL OR ${table.notes} IS NOT NULL`,
+    ),
+    check(
+      "clinical_note_revision_reason_length_check",
+      sql`${table.reasonForVisit} IS NULL OR length(${table.reasonForVisit}) <= 2000`,
+    ),
+    check(
+      "clinical_note_revision_observations_length_check",
+      sql`${table.observations} IS NULL OR length(${table.observations}) <= 10000`,
+    ),
+    check(
+      "clinical_note_revision_diagnosis_length_check",
+      sql`${table.diagnosis} IS NULL OR length(${table.diagnosis}) <= 4000`,
+    ),
+    check(
+      "clinical_note_revision_notes_length_check",
+      sql`${table.notes} IS NULL OR length(${table.notes}) <= 20000`,
+    ),
+  ],
+);
+
+export const clinicalNoteAddendum = pgTable(
+  "clinical_note_addendum",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    consultationId: uuid("consultation_id")
+      .notNull()
+      .references(() => consultation.id, { onDelete: "restrict" }),
+    content: text("content").notNull(),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("clinical_note_addendum_consultation_created_idx").on(
+      table.consultationId,
+      table.createdAt,
+    ),
+    check(
+      "clinical_note_addendum_content_check",
+      sql`length(btrim(${table.content})) BETWEEN 1 AND 20000`,
     ),
   ],
 );
