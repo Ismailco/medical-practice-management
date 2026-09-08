@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PatientLifecycleButton } from "@/components/patient-lifecycle-button";
 import { StartDirectConsultationButton } from "@/components/start-direct-consultation-button";
 import { FollowUpCreateForm } from "@/components/follow-up-create-form";
+import { PrescriptionCreateButton } from "@/components/prescription-create-button";
 import { hasCapability } from "@/modules/auth/capabilities";
 import { requirePageCapability } from "@/modules/auth/page";
 import { listPatientAppointments } from "@/modules/appointments/repository";
@@ -11,6 +12,7 @@ import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import { appointmentHistoryQuerySchema } from "@/modules/appointments/validation";
 import { listPatientConsultations } from "@/modules/consultations/repository";
 import { listPatientFollowUps } from "@/modules/follow-ups/repository";
+import { listPatientPrescriptions } from "@/modules/prescriptions/repository";
 import { findAdministrativePatientById } from "@/modules/patients/repository";
 import { patientIdSchema } from "@/modules/patients/validation";
 
@@ -37,6 +39,8 @@ export default async function PatientPage({ params, searchParams }: PageContext)
   const consultations = canReadConsultations ? await listPatientConsultations(patient.id) : [];
   const canReadFollowUps = hasCapability(currentUser.role, "followups.read_sensitive");
   const followUps = canReadFollowUps ? await listPatientFollowUps(patient.id) : [];
+  const canReadPrescriptions = hasCapability(currentUser.role, "prescriptions.read");
+  const prescriptions = canReadPrescriptions ? await listPatientPrescriptions(patient.id) : [];
 
   return (
     <section className="max-w-5xl">
@@ -236,6 +240,37 @@ export default async function PatientPage({ params, searchParams }: PageContext)
             )}
           </ul>
           {!archived ? <FollowUpCreateForm patientId={patient.id} /> : null}
+        </section>
+      ) : null}
+      {canReadPrescriptions ? (
+        <section className="mt-10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-slate-950">Prescriptions</h2>
+            {!archived ? <PrescriptionCreateButton patientId={patient.id} /> : null}
+          </div>
+          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+            {prescriptions.length === 0 ? (
+              <li className="p-6 text-sm text-slate-600">No prescription history.</li>
+            ) : (
+              prescriptions.map((item) => (
+                <li
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                  key={item.id}
+                >
+                  <Link
+                    className="font-medium text-teal-800 hover:underline"
+                    href={`/prescriptions/${item.id}`}
+                  >
+                    {item.prescriptionNumber ?? "Draft prescription"}
+                  </Link>
+                  <span className="text-sm text-slate-600">
+                    {item.status}
+                    {item.issueDate ? ` · ${item.issueDate}` : ""}
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
         </section>
       ) : null}
     </section>

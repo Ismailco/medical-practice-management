@@ -1,0 +1,2848 @@
+{
+  "id": "f5635225-f0da-455d-a754-92082efb27a5",
+  "prevId": "85523c5e-965c-46fe-9289-daf6f3445b35",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.auth_account": {
+      "name": "auth_account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "auth_account_issuer_account_id_unique": {
+          "name": "auth_account_issuer_account_id_unique",
+          "columns": [
+            {
+              "expression": "issuer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_account_user_id_idx": {
+          "name": "auth_account_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auth_account_user_id_auth_user_id_fk": {
+          "name": "auth_account_user_id_auth_user_id_fk",
+          "tableFrom": "auth_account",
+          "tableTo": "auth_user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "auth_account_credential_password_check": {
+          "name": "auth_account_credential_password_check",
+          "value": "\"auth_account\".\"provider_id\" <> 'credential' OR \"auth_account\".\"password\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.appointment": {
+      "name": "appointment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_start": {
+          "name": "scheduled_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_end": {
+          "name": "scheduled_end",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "appointment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'SCHEDULED'"
+        },
+        "administrative_reason": {
+          "name": "administrative_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_by": {
+          "name": "cancelled_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "appointment_scheduled_start_idx": {
+          "name": "appointment_scheduled_start_idx",
+          "columns": [
+            {
+              "expression": "scheduled_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "appointment_patient_start_idx": {
+          "name": "appointment_patient_start_idx",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scheduled_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "appointment_status_start_idx": {
+          "name": "appointment_status_start_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scheduled_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "appointment_patient_id_patient_id_fk": {
+          "name": "appointment_patient_id_patient_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "patient",
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "appointment_created_by_auth_user_id_fk": {
+          "name": "appointment_created_by_auth_user_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "auth_user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "appointment_cancelled_by_auth_user_id_fk": {
+          "name": "appointment_cancelled_by_auth_user_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "auth_user",
+          "columnsFrom": ["cancelled_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "appointment_time_order_check": {
+          "name": "appointment_time_order_check",
+          "value": "\"appointment\".\"scheduled_end\" > \"appointment\".\"scheduled_start\""
+        },
+        "appointment_version_positive_check": {
+          "name": "appointment_version_positive_check",
+          "value": "\"appointment\".\"version\" >= 1"
+        },
+        "appointment_reason_length_check": {
+          "name": "appointment_reason_length_check",
+          "value": "\"appointment\".\"administrative_reason\" IS NULL OR length(\"appointment\".\"administrative_reason\") <= 160"
+        },
+        "appointment_cancellation_metadata_check": {
+          "name": "appointment_cancellation_metadata_check",
+          "value": "(\"appointment\".\"status\" = 'CANCELLED') = (\"appointment\".\"cancelled_at\" IS NOT NULL AND \"appointment\".\"cancelled_by\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "audit_action",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "audit_log_actor_occurred_at_idx": {
+          "name": "audit_log_actor_occurred_at_idx",
+          "columns": [
+            {
+              "expression": "actor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_log_action_occurred_at_idx": {
+          "name": "audit_log_action_occurred_at_idx",
+          "columns": [
+            {
+              "expression": "action",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_log_entity_idx": {
+          "name": "audit_log_entity_idx",
+          "columns": [
+            {
+              "expression": "entity_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_log_actor_user_id_auth_user_id_fk": {
+          "name": "audit_log_actor_user_id_auth_user_id_fk",
+          "tableFrom": "audit_log",
+          "tableTo": "auth_user",
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_log_entity_type_nonempty_check": {
+          "name": "audit_log_entity_type_nonempty_check",
+          "value": "length(btrim(\"audit_log\".\"entity_type\")) > 0"
+        },
+        "audit_log_metadata_object_check": {
+          "name": "audit_log_metadata_object_check",
+          "value": "jsonb_typeof(\"audit_log\".\"metadata\") = 'object'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.clinic_profile": {
+      "name": "clinic_profile",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "clinic_profile_singleton_check": {
+          "name": "clinic_profile_singleton_check",
+          "value": "\"clinic_profile\".\"id\" = 1"
+        },
+        "clinic_profile_name_check": {
+          "name": "clinic_profile_name_check",
+          "value": "length(btrim(\"clinic_profile\".\"name\")) BETWEEN 1 AND 200"
+        },
+        "clinic_profile_address_check": {
+          "name": "clinic_profile_address_check",
+          "value": "\"clinic_profile\".\"address\" IS NULL OR length(\"clinic_profile\".\"address\") <= 500"
+        },
+        "clinic_profile_phone_check": {
+          "name": "clinic_profile_phone_check",
+          "value": "\"clinic_profile\".\"phone\" IS NULL OR length(\"clinic_profile\".\"phone\") <= 50"
+        },
+        "clinic_profile_version_positive_check": {
+          "name": "clinic_profile_version_positive_check",
+          "value": "\"clinic_profile\".\"version\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.clinical_note_addendum": {
+      "name": "clinical_note_addendum",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "consultation_id": {
+          "name": "consultation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "clinical_note_addendum_consultation_created_idx": {
+          "name": "clinical_note_addendum_consultation_created_idx",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "clinical_note_addendum_consultation_id_consultation_id_fk": {
+          "name": "clinical_note_addendum_consultation_id_consultation_id_fk",
+          "tableFrom": "clinical_note_addendum",
+          "tableTo": "consultation",
+          "columnsFrom": ["consultation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "clinical_note_addendum_created_by_auth_user_id_fk": {
+          "name": "clinical_note_addendum_created_by_auth_user_id_fk",
+          "tableFrom": "clinical_note_addendum",
+          "tableTo": "auth_user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "clinical_note_addendum_content_check": {
+          "name": "clinical_note_addendum_content_check",
+          "value": "length(btrim(\"clinical_note_addendum\".\"content\")) BETWEEN 1 AND 20000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.clinical_note_revision": {
+      "name": "clinical_note_revision",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "consultation_id": {
+          "name": "consultation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision_number": {
+          "name": "revision_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason_for_visit": {
+          "name": "reason_for_visit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observations": {
+          "name": "observations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diagnosis": {
+          "name": "diagnosis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "clinical_note_revision_number_unique": {
+          "name": "clinical_note_revision_number_unique",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "revision_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "clinical_note_revision_consultation_id_unique": {
+          "name": "clinical_note_revision_consultation_id_unique",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "clinical_note_revision_created_at_idx": {
+          "name": "clinical_note_revision_created_at_idx",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "clinical_note_revision_consultation_id_consultation_id_fk": {
+          "name": "clinical_note_revision_consultation_id_consultation_id_fk",
+          "tableFrom": "clinical_note_revision",
+          "tableTo": "consultation",
+          "columnsFrom": ["consultation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "clinical_note_revision_created_by_auth_user_id_fk": {
+          "name": "clinical_note_revision_created_by_auth_user_id_fk",
+          "tableFrom": "clinical_note_revision",
+          "tableTo": "auth_user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "clinical_note_revision_number_positive_check": {
+          "name": "clinical_note_revision_number_positive_check",
+          "value": "\"clinical_note_revision\".\"revision_number\" >= 1"
+        },
+        "clinical_note_revision_content_check": {
+          "name": "clinical_note_revision_content_check",
+          "value": "\"clinical_note_revision\".\"reason_for_visit\" IS NOT NULL OR \"clinical_note_revision\".\"observations\" IS NOT NULL OR \"clinical_note_revision\".\"diagnosis\" IS NOT NULL OR \"clinical_note_revision\".\"notes\" IS NOT NULL"
+        },
+        "clinical_note_revision_reason_length_check": {
+          "name": "clinical_note_revision_reason_length_check",
+          "value": "\"clinical_note_revision\".\"reason_for_visit\" IS NULL OR length(\"clinical_note_revision\".\"reason_for_visit\") <= 2000"
+        },
+        "clinical_note_revision_observations_length_check": {
+          "name": "clinical_note_revision_observations_length_check",
+          "value": "\"clinical_note_revision\".\"observations\" IS NULL OR length(\"clinical_note_revision\".\"observations\") <= 10000"
+        },
+        "clinical_note_revision_diagnosis_length_check": {
+          "name": "clinical_note_revision_diagnosis_length_check",
+          "value": "\"clinical_note_revision\".\"diagnosis\" IS NULL OR length(\"clinical_note_revision\".\"diagnosis\") <= 4000"
+        },
+        "clinical_note_revision_notes_length_check": {
+          "name": "clinical_note_revision_notes_length_check",
+          "value": "\"clinical_note_revision\".\"notes\" IS NULL OR length(\"clinical_note_revision\".\"notes\") <= 20000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.consultation": {
+      "name": "consultation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "appointment_id": {
+          "name": "appointment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doctor_id": {
+          "name": "doctor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "consultation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'IN_PROGRESS'"
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finalized_at": {
+          "name": "finalized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "final_revision_id": {
+          "name": "final_revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revision_count": {
+          "name": "revision_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "consultation_appointment_unique": {
+          "name": "consultation_appointment_unique",
+          "columns": [
+            {
+              "expression": "appointment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "consultation_patient_id_unique": {
+          "name": "consultation_patient_id_unique",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "consultation_patient_started_idx": {
+          "name": "consultation_patient_started_idx",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "consultation_status_started_idx": {
+          "name": "consultation_status_started_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "consultation_doctor_started_idx": {
+          "name": "consultation_doctor_started_idx",
+          "columns": [
+            {
+              "expression": "doctor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "started_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "consultation_patient_id_patient_id_fk": {
+          "name": "consultation_patient_id_patient_id_fk",
+          "tableFrom": "consultation",
+          "tableTo": "patient",
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "consultation_appointment_id_appointment_id_fk": {
+          "name": "consultation_appointment_id_appointment_id_fk",
+          "tableFrom": "consultation",
+          "tableTo": "appointment",
+          "columnsFrom": ["appointment_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "consultation_doctor_id_auth_user_id_fk": {
+          "name": "consultation_doctor_id_auth_user_id_fk",
+          "tableFrom": "consultation",
+          "tableTo": "auth_user",
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "consultation_version_positive_check": {
+          "name": "consultation_version_positive_check",
+          "value": "\"consultation\".\"version\" >= 1"
+        },
+        "consultation_revision_count_check": {
+          "name": "consultation_revision_count_check",
+          "value": "\"consultation\".\"revision_count\" >= 0"
+        },
+        "consultation_finalization_state_check": {
+          "name": "consultation_finalization_state_check",
+          "value": "(\"consultation\".\"status\" = 'IN_PROGRESS' AND \"consultation\".\"finalized_at\" IS NULL AND \"consultation\".\"final_revision_id\" IS NULL) OR (\"consultation\".\"status\" = 'FINALIZED' AND \"consultation\".\"finalized_at\" IS NOT NULL AND \"consultation\".\"final_revision_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.doctor_professional_profile": {
+      "name": "doctor_professional_profile",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "specialty": {
+          "name": "specialty",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "professional_identifier": {
+          "name": "professional_identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "doctor_professional_profile_user_id_auth_user_id_fk": {
+          "name": "doctor_professional_profile_user_id_auth_user_id_fk",
+          "tableFrom": "doctor_professional_profile",
+          "tableTo": "auth_user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "doctor_profile_display_name_check": {
+          "name": "doctor_profile_display_name_check",
+          "value": "length(btrim(\"doctor_professional_profile\".\"display_name\")) BETWEEN 1 AND 200"
+        },
+        "doctor_profile_specialty_check": {
+          "name": "doctor_profile_specialty_check",
+          "value": "\"doctor_professional_profile\".\"specialty\" IS NULL OR length(\"doctor_professional_profile\".\"specialty\") <= 200"
+        },
+        "doctor_profile_identifier_check": {
+          "name": "doctor_profile_identifier_check",
+          "value": "\"doctor_professional_profile\".\"professional_identifier\" IS NULL OR length(\"doctor_professional_profile\".\"professional_identifier\") <= 200"
+        },
+        "doctor_profile_version_positive_check": {
+          "name": "doctor_profile_version_positive_check",
+          "value": "\"doctor_professional_profile\".\"version\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.follow_up": {
+      "name": "follow_up",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consultation_id": {
+          "name": "consultation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "follow_up_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_by": {
+          "name": "completed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_by": {
+          "name": "cancelled_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "follow_up_status_due_date_idx": {
+          "name": "follow_up_status_due_date_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "due_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "follow_up_patient_due_date_idx": {
+          "name": "follow_up_patient_due_date_idx",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "due_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "follow_up_consultation_idx": {
+          "name": "follow_up_consultation_idx",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "follow_up_patient_id_patient_id_fk": {
+          "name": "follow_up_patient_id_patient_id_fk",
+          "tableFrom": "follow_up",
+          "tableTo": "patient",
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "follow_up_created_by_auth_user_id_fk": {
+          "name": "follow_up_created_by_auth_user_id_fk",
+          "tableFrom": "follow_up",
+          "tableTo": "auth_user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "follow_up_completed_by_auth_user_id_fk": {
+          "name": "follow_up_completed_by_auth_user_id_fk",
+          "tableFrom": "follow_up",
+          "tableTo": "auth_user",
+          "columnsFrom": ["completed_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "follow_up_cancelled_by_auth_user_id_fk": {
+          "name": "follow_up_cancelled_by_auth_user_id_fk",
+          "tableFrom": "follow_up",
+          "tableTo": "auth_user",
+          "columnsFrom": ["cancelled_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "follow_up_consultation_patient_fk": {
+          "name": "follow_up_consultation_patient_fk",
+          "tableFrom": "follow_up",
+          "tableTo": "consultation",
+          "columnsFrom": ["patient_id", "consultation_id"],
+          "columnsTo": ["patient_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "follow_up_version_positive_check": {
+          "name": "follow_up_version_positive_check",
+          "value": "\"follow_up\".\"version\" >= 1"
+        },
+        "follow_up_reason_check": {
+          "name": "follow_up_reason_check",
+          "value": "length(btrim(\"follow_up\".\"reason\")) BETWEEN 1 AND 2000 AND \"follow_up\".\"reason\" = btrim(\"follow_up\".\"reason\")"
+        },
+        "follow_up_lifecycle_metadata_check": {
+          "name": "follow_up_lifecycle_metadata_check",
+          "value": "(\"follow_up\".\"status\" = 'PENDING' AND \"follow_up\".\"completed_at\" IS NULL AND \"follow_up\".\"completed_by\" IS NULL AND \"follow_up\".\"cancelled_at\" IS NULL AND \"follow_up\".\"cancelled_by\" IS NULL) OR (\"follow_up\".\"status\" = 'COMPLETED' AND \"follow_up\".\"completed_at\" IS NOT NULL AND \"follow_up\".\"completed_by\" IS NOT NULL AND \"follow_up\".\"cancelled_at\" IS NULL AND \"follow_up\".\"cancelled_by\" IS NULL) OR (\"follow_up\".\"status\" = 'CANCELLED' AND \"follow_up\".\"completed_at\" IS NULL AND \"follow_up\".\"completed_by\" IS NULL AND \"follow_up\".\"cancelled_at\" IS NOT NULL AND \"follow_up\".\"cancelled_by\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.login_throttle": {
+      "name": "login_throttle",
+      "schema": "",
+      "columns": {
+        "key_hash": {
+          "name": "key_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "failed_attempts": {
+          "name": "failed_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "window_started_at": {
+          "name": "window_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "blocked_until": {
+          "name": "blocked_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "login_throttle_blocked_until_idx": {
+          "name": "login_throttle_blocked_until_idx",
+          "columns": [
+            {
+              "expression": "blocked_until",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "login_throttle_updated_at_idx": {
+          "name": "login_throttle_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "login_throttle_key_hash_length_check": {
+          "name": "login_throttle_key_hash_length_check",
+          "value": "length(\"login_throttle\".\"key_hash\") = 64"
+        },
+        "login_throttle_failed_attempts_check": {
+          "name": "login_throttle_failed_attempts_check",
+          "value": "\"login_throttle\".\"failed_attempts\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.patient": {
+      "name": "patient",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_number": {
+          "name": "patient_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'P-' || lpad(nextval('patient_number_seq')::text, 6, '0')"
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_of_birth": {
+          "name": "date_of_birth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone_normalized": {
+          "name": "phone_normalized",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emergency_contact_name": {
+          "name": "emergency_contact_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "emergency_contact_phone": {
+          "name": "emergency_contact_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_by": {
+          "name": "archived_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "patient_patient_number_unique": {
+          "name": "patient_patient_number_unique",
+          "columns": [
+            {
+              "expression": "patient_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_active_name_idx": {
+          "name": "patient_active_name_idx",
+          "columns": [
+            {
+              "expression": "last_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "first_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "patient_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"patient\".\"archived_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_phone_normalized_idx": {
+          "name": "patient_phone_normalized_idx",
+          "columns": [
+            {
+              "expression": "phone_normalized",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_email_lower_idx": {
+          "name": "patient_email_lower_idx",
+          "columns": [
+            {
+              "expression": "lower(\"email\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_archived_at_idx": {
+          "name": "patient_archived_at_idx",
+          "columns": [
+            {
+              "expression": "archived_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "patient_archived_by_auth_user_id_fk": {
+          "name": "patient_archived_by_auth_user_id_fk",
+          "tableFrom": "patient",
+          "tableTo": "auth_user",
+          "columnsFrom": ["archived_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "patient_number_format_check": {
+          "name": "patient_number_format_check",
+          "value": "\"patient\".\"patient_number\" ~ '^P-[0-9]{6,}$'"
+        },
+        "patient_first_name_check": {
+          "name": "patient_first_name_check",
+          "value": "length(btrim(\"patient\".\"first_name\")) BETWEEN 1 AND 100 AND \"patient\".\"first_name\" = btrim(\"patient\".\"first_name\")"
+        },
+        "patient_last_name_check": {
+          "name": "patient_last_name_check",
+          "value": "length(btrim(\"patient\".\"last_name\")) BETWEEN 1 AND 100 AND \"patient\".\"last_name\" = btrim(\"patient\".\"last_name\")"
+        },
+        "patient_date_of_birth_check": {
+          "name": "patient_date_of_birth_check",
+          "value": "\"patient\".\"date_of_birth\" <= CURRENT_DATE"
+        },
+        "patient_phone_length_check": {
+          "name": "patient_phone_length_check",
+          "value": "\"patient\".\"phone\" IS NULL OR length(\"patient\".\"phone\") <= 32"
+        },
+        "patient_phone_normalized_check": {
+          "name": "patient_phone_normalized_check",
+          "value": "\"patient\".\"phone_normalized\" IS NULL OR \"patient\".\"phone_normalized\" ~ '^\\+?[0-9]{5,20}$'"
+        },
+        "patient_phone_pair_check": {
+          "name": "patient_phone_pair_check",
+          "value": "(\"patient\".\"phone\" IS NULL) = (\"patient\".\"phone_normalized\" IS NULL)"
+        },
+        "patient_email_check": {
+          "name": "patient_email_check",
+          "value": "\"patient\".\"email\" IS NULL OR (length(\"patient\".\"email\") <= 254 AND \"patient\".\"email\" = lower(btrim(\"patient\".\"email\")))"
+        },
+        "patient_address_length_check": {
+          "name": "patient_address_length_check",
+          "value": "\"patient\".\"address\" IS NULL OR length(\"patient\".\"address\") <= 500"
+        },
+        "patient_emergency_name_length_check": {
+          "name": "patient_emergency_name_length_check",
+          "value": "\"patient\".\"emergency_contact_name\" IS NULL OR length(\"patient\".\"emergency_contact_name\") <= 100"
+        },
+        "patient_emergency_phone_length_check": {
+          "name": "patient_emergency_phone_length_check",
+          "value": "\"patient\".\"emergency_contact_phone\" IS NULL OR length(\"patient\".\"emergency_contact_phone\") <= 32"
+        },
+        "patient_version_positive_check": {
+          "name": "patient_version_positive_check",
+          "value": "\"patient\".\"version\" >= 1"
+        },
+        "patient_archive_pair_check": {
+          "name": "patient_archive_pair_check",
+          "value": "(\"patient\".\"archived_at\" IS NULL) = (\"patient\".\"archived_by\" IS NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.prescription": {
+      "name": "prescription",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consultation_id": {
+          "name": "consultation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doctor_id": {
+          "name": "doctor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "prescription_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DRAFT'"
+        },
+        "prescription_number": {
+          "name": "prescription_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "issued_at": {
+          "name": "issued_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "issue_date": {
+          "name": "issue_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replaces_prescription_id": {
+          "name": "replaces_prescription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voided_at": {
+          "name": "voided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voided_by": {
+          "name": "voided_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "prescription_patient_id_unique": {
+          "name": "prescription_patient_id_unique",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_number_unique": {
+          "name": "prescription_number_unique",
+          "columns": [
+            {
+              "expression": "prescription_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_issued_replacement_unique": {
+          "name": "prescription_issued_replacement_unique",
+          "columns": [
+            {
+              "expression": "replaces_prescription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"prescription\".\"status\" IN ('FINALIZED', 'VOID') AND \"prescription\".\"replaces_prescription_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_patient_created_idx": {
+          "name": "prescription_patient_created_idx",
+          "columns": [
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_status_created_idx": {
+          "name": "prescription_status_created_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_consultation_idx": {
+          "name": "prescription_consultation_idx",
+          "columns": [
+            {
+              "expression": "consultation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_replacement_idx": {
+          "name": "prescription_replacement_idx",
+          "columns": [
+            {
+              "expression": "replaces_prescription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "prescription_patient_id_patient_id_fk": {
+          "name": "prescription_patient_id_patient_id_fk",
+          "tableFrom": "prescription",
+          "tableTo": "patient",
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "prescription_doctor_id_auth_user_id_fk": {
+          "name": "prescription_doctor_id_auth_user_id_fk",
+          "tableFrom": "prescription",
+          "tableTo": "auth_user",
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "prescription_replaces_prescription_id_prescription_id_fk": {
+          "name": "prescription_replaces_prescription_id_prescription_id_fk",
+          "tableFrom": "prescription",
+          "tableTo": "prescription",
+          "columnsFrom": ["replaces_prescription_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "prescription_voided_by_auth_user_id_fk": {
+          "name": "prescription_voided_by_auth_user_id_fk",
+          "tableFrom": "prescription",
+          "tableTo": "auth_user",
+          "columnsFrom": ["voided_by"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "prescription_consultation_patient_fk": {
+          "name": "prescription_consultation_patient_fk",
+          "tableFrom": "prescription",
+          "tableTo": "consultation",
+          "columnsFrom": ["patient_id", "consultation_id"],
+          "columnsTo": ["patient_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "prescription_replacement_patient_fk": {
+          "name": "prescription_replacement_patient_fk",
+          "tableFrom": "prescription",
+          "tableTo": "prescription",
+          "columnsFrom": ["patient_id", "replaces_prescription_id"],
+          "columnsTo": ["patient_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "prescription_version_positive_check": {
+          "name": "prescription_version_positive_check",
+          "value": "\"prescription\".\"version\" >= 1"
+        },
+        "prescription_number_format_check": {
+          "name": "prescription_number_format_check",
+          "value": "\"prescription\".\"prescription_number\" IS NULL OR \"prescription\".\"prescription_number\" ~ '^RX-[0-9]{6,}$'"
+        },
+        "prescription_state_metadata_check": {
+          "name": "prescription_state_metadata_check",
+          "value": "(\"prescription\".\"status\" = 'DRAFT' AND \"prescription\".\"prescription_number\" IS NULL AND \"prescription\".\"issued_at\" IS NULL AND \"prescription\".\"issue_date\" IS NULL AND \"prescription\".\"voided_at\" IS NULL AND \"prescription\".\"voided_by\" IS NULL) OR (\"prescription\".\"status\" = 'FINALIZED' AND \"prescription\".\"prescription_number\" IS NOT NULL AND \"prescription\".\"issued_at\" IS NOT NULL AND \"prescription\".\"issue_date\" IS NOT NULL AND \"prescription\".\"voided_at\" IS NULL AND \"prescription\".\"voided_by\" IS NULL) OR (\"prescription\".\"status\" = 'VOID' AND \"prescription\".\"prescription_number\" IS NOT NULL AND \"prescription\".\"issued_at\" IS NOT NULL AND \"prescription\".\"issue_date\" IS NOT NULL AND \"prescription\".\"voided_at\" IS NOT NULL AND \"prescription\".\"voided_by\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.prescription_counter": {
+      "name": "prescription_counter",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "next_number": {
+          "name": "next_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.prescription_issue_snapshot": {
+      "name": "prescription_issue_snapshot",
+      "schema": "",
+      "columns": {
+        "prescription_id": {
+          "name": "prescription_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "patient_number": {
+          "name": "patient_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_name": {
+          "name": "patient_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_date_of_birth": {
+          "name": "patient_date_of_birth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doctor_name": {
+          "name": "doctor_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "doctor_specialty": {
+          "name": "doctor_specialty",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "doctor_professional_identifier": {
+          "name": "doctor_professional_identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clinic_name": {
+          "name": "clinic_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clinic_address": {
+          "name": "clinic_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clinic_phone": {
+          "name": "clinic_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "template_version": {
+          "name": "template_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'phase6-v1'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "prescription_issue_snapshot_prescription_id_prescription_id_fk": {
+          "name": "prescription_issue_snapshot_prescription_id_prescription_id_fk",
+          "tableFrom": "prescription_issue_snapshot",
+          "tableTo": "prescription",
+          "columnsFrom": ["prescription_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "prescription_snapshot_patient_number_check": {
+          "name": "prescription_snapshot_patient_number_check",
+          "value": "length(btrim(\"prescription_issue_snapshot\".\"patient_number\")) > 0"
+        },
+        "prescription_snapshot_patient_name_check": {
+          "name": "prescription_snapshot_patient_name_check",
+          "value": "length(btrim(\"prescription_issue_snapshot\".\"patient_name\")) > 0"
+        },
+        "prescription_snapshot_doctor_name_check": {
+          "name": "prescription_snapshot_doctor_name_check",
+          "value": "length(btrim(\"prescription_issue_snapshot\".\"doctor_name\")) > 0"
+        },
+        "prescription_snapshot_clinic_name_check": {
+          "name": "prescription_snapshot_clinic_name_check",
+          "value": "length(btrim(\"prescription_issue_snapshot\".\"clinic_name\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.prescription_item": {
+      "name": "prescription_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "prescription_id": {
+          "name": "prescription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medication_name": {
+          "name": "medication_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dosage": {
+          "name": "dosage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "form": {
+          "name": "form",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "route": {
+          "name": "route",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instructions": {
+          "name": "instructions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "prescription_item_position_unique": {
+          "name": "prescription_item_position_unique",
+          "columns": [
+            {
+              "expression": "prescription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "prescription_item_prescription_idx": {
+          "name": "prescription_item_prescription_idx",
+          "columns": [
+            {
+              "expression": "prescription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "prescription_item_prescription_id_prescription_id_fk": {
+          "name": "prescription_item_prescription_id_prescription_id_fk",
+          "tableFrom": "prescription_item",
+          "tableTo": "prescription",
+          "columnsFrom": ["prescription_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "prescription_item_position_check": {
+          "name": "prescription_item_position_check",
+          "value": "\"prescription_item\".\"position\" >= 0"
+        },
+        "prescription_item_medication_name_check": {
+          "name": "prescription_item_medication_name_check",
+          "value": "length(btrim(\"prescription_item\".\"medication_name\")) BETWEEN 1 AND 200"
+        },
+        "prescription_item_dosage_check": {
+          "name": "prescription_item_dosage_check",
+          "value": "\"prescription_item\".\"dosage\" IS NULL OR length(\"prescription_item\".\"dosage\") <= 200"
+        },
+        "prescription_item_form_check": {
+          "name": "prescription_item_form_check",
+          "value": "\"prescription_item\".\"form\" IS NULL OR length(\"prescription_item\".\"form\") <= 100"
+        },
+        "prescription_item_frequency_check": {
+          "name": "prescription_item_frequency_check",
+          "value": "\"prescription_item\".\"frequency\" IS NULL OR length(\"prescription_item\".\"frequency\") <= 200"
+        },
+        "prescription_item_duration_check": {
+          "name": "prescription_item_duration_check",
+          "value": "\"prescription_item\".\"duration\" IS NULL OR length(\"prescription_item\".\"duration\") <= 200"
+        },
+        "prescription_item_quantity_check": {
+          "name": "prescription_item_quantity_check",
+          "value": "\"prescription_item\".\"quantity\" IS NULL OR length(\"prescription_item\".\"quantity\") <= 100"
+        },
+        "prescription_item_route_check": {
+          "name": "prescription_item_route_check",
+          "value": "\"prescription_item\".\"route\" IS NULL OR length(\"prescription_item\".\"route\") <= 100"
+        },
+        "prescription_item_instructions_check": {
+          "name": "prescription_item_instructions_check",
+          "value": "\"prescription_item\".\"instructions\" IS NULL OR length(\"prescription_item\".\"instructions\") <= 1000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auth_rate_limit": {
+      "name": "auth_rate_limit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_request": {
+          "name": "last_request",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "auth_rate_limit_key_unique": {
+          "name": "auth_rate_limit_key_unique",
+          "columns": [
+            {
+              "expression": "key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_rate_limit_last_request_idx": {
+          "name": "auth_rate_limit_last_request_idx",
+          "columns": [
+            {
+              "expression": "last_request",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "auth_rate_limit_count_positive_check": {
+          "name": "auth_rate_limit_count_positive_check",
+          "value": "\"auth_rate_limit\".\"count\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auth_session": {
+      "name": "auth_session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "auth_session_token_unique": {
+          "name": "auth_session_token_unique",
+          "columns": [
+            {
+              "expression": "token",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_session_user_id_idx": {
+          "name": "auth_session_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_session_expires_at_idx": {
+          "name": "auth_session_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auth_session_user_id_auth_user_id_fk": {
+          "name": "auth_session_user_id_auth_user_id_fk",
+          "tableFrom": "auth_session",
+          "tableTo": "auth_user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auth_user": {
+      "name": "auth_user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "staff_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "auth_user_email_lower_unique": {
+          "name": "auth_user_email_lower_unique",
+          "columns": [
+            {
+              "expression": "lower(\"email\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_user_single_doctor_unique": {
+          "name": "auth_user_single_doctor_unique",
+          "columns": [
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"auth_user\".\"role\" = 'DOCTOR'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_user_role_active_idx": {
+          "name": "auth_user_role_active_idx",
+          "columns": [
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "active",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "auth_user_email_normalized_check": {
+          "name": "auth_user_email_normalized_check",
+          "value": "\"auth_user\".\"email\" = lower(btrim(\"auth_user\".\"email\"))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auth_verification": {
+      "name": "auth_verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "auth_verification_identifier_idx": {
+          "name": "auth_verification_identifier_idx",
+          "columns": [
+            {
+              "expression": "identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auth_verification_expires_at_idx": {
+          "name": "auth_verification_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.appointment_status": {
+      "name": "appointment_status",
+      "schema": "public",
+      "values": ["SCHEDULED", "ARRIVED", "IN_CONSULTATION", "COMPLETED", "CANCELLED", "NO_SHOW"]
+    },
+    "public.audit_action": {
+      "name": "audit_action",
+      "schema": "public",
+      "values": [
+        "AUTH_LOGIN_SUCCEEDED",
+        "AUTH_LOGIN_FAILED",
+        "AUTH_LOGIN_THROTTLED",
+        "AUTH_LOGOUT",
+        "USER_SECRETARY_CREATED",
+        "USER_SECRETARY_DISABLED",
+        "USER_SECRETARY_ENABLED",
+        "USER_SECRETARY_PASSWORD_RESET",
+        "USER_DOCTOR_BOOTSTRAPPED",
+        "USER_DOCTOR_PASSWORD_RESET",
+        "PATIENT_CREATED",
+        "PATIENT_ADMIN_UPDATED",
+        "PATIENT_ARCHIVED",
+        "PATIENT_RESTORED",
+        "APPOINTMENT_CREATED",
+        "APPOINTMENT_RESCHEDULED",
+        "APPOINTMENT_STATUS_CHANGED",
+        "CONSULTATION_CREATED",
+        "CLINICAL_NOTE_REVISION_CREATED",
+        "CONSULTATION_FINALIZED",
+        "CLINICAL_ADDENDUM_CREATED",
+        "FOLLOW_UP_CREATED",
+        "FOLLOW_UP_UPDATED",
+        "FOLLOW_UP_COMPLETED",
+        "FOLLOW_UP_CANCELLED",
+        "PRESCRIPTION_DRAFT_CREATED",
+        "PRESCRIPTION_DRAFT_UPDATED",
+        "PRESCRIPTION_DRAFT_DISCARDED",
+        "PRESCRIPTION_FINALIZED",
+        "PRESCRIPTION_VOIDED",
+        "PRESCRIPTION_DUPLICATED",
+        "PRESCRIPTION_REPLACEMENT_DRAFT_CREATED",
+        "PRACTICE_PROFILE_UPDATED"
+      ]
+    },
+    "public.consultation_status": {
+      "name": "consultation_status",
+      "schema": "public",
+      "values": ["IN_PROGRESS", "FINALIZED"]
+    },
+    "public.follow_up_status": {
+      "name": "follow_up_status",
+      "schema": "public",
+      "values": ["PENDING", "COMPLETED", "CANCELLED"]
+    },
+    "public.prescription_status": {
+      "name": "prescription_status",
+      "schema": "public",
+      "values": ["DRAFT", "FINALIZED", "VOID"]
+    },
+    "public.staff_role": {
+      "name": "staff_role",
+      "schema": "public",
+      "values": ["DOCTOR", "SECRETARY"]
+    }
+  },
+  "schemas": {},
+  "sequences": {
+    "public.patient_number_seq": {
+      "name": "patient_number_seq",
+      "schema": "public",
+      "increment": "1",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "cache": "1",
+      "cycle": false
+    }
+  },
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "prescription" ADD CONSTRAINT "prescription_replacement_patient_fk" FOREIGN KEY ("patient_id","replaces_prescription_id") REFERENCES "public"."prescription"("patient_id","id") ON DELETE restrict ON UPDATE no action;

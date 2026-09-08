@@ -1,0 +1,2 @@
+-- The direct replacement foreign key is created in 0005; this migration records the
+-- schema snapshot after adding the composite same-patient replacement invariant.

@@ -4,12 +4,14 @@ import { notFound } from "next/navigation";
 import { ClinicalAddendumForm } from "@/components/clinical-addendum-form";
 import { ConsultationEditor } from "@/components/consultation-editor";
 import { FollowUpCreateForm } from "@/components/follow-up-create-form";
+import { PrescriptionCreateButton } from "@/components/prescription-create-button";
 import { requirePageCapability } from "@/modules/auth/page";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import type { ClinicalRevisionDto } from "@/modules/consultations/dto";
 import { findConsultationDetail } from "@/modules/consultations/repository";
 import { consultationIdSchema } from "@/modules/consultations/validation";
 import { listConsultationFollowUps } from "@/modules/follow-ups/repository";
+import { listConsultationPrescriptions } from "@/modules/prescriptions/repository";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -44,6 +46,7 @@ export default async function ConsultationPage({ params }: Props) {
   const current = record.revisions[0];
   const finalRevision = record.revisions.find((revision) => revision.final);
   const followUps = await listConsultationFollowUps(record.id);
+  const prescriptions = await listConsultationPrescriptions(record.id);
 
   return (
     <section className="max-w-5xl">
@@ -175,6 +178,34 @@ export default async function ConsultationPage({ params }: Props) {
           )}
         </ul>
         <FollowUpCreateForm consultationId={record.id} />
+      </section>
+      <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Prescriptions</h2>
+          <PrescriptionCreateButton consultationId={record.id} />
+        </div>
+        <ul className="mt-4 divide-y divide-slate-100">
+          {prescriptions.length === 0 ? (
+            <li className="py-3 text-sm text-slate-600">
+              No prescriptions linked to this consultation.
+            </li>
+          ) : (
+            prescriptions.map((item) => (
+              <li className="flex flex-wrap justify-between gap-3 py-3" key={item.id}>
+                <Link
+                  className="font-medium text-teal-800 hover:underline"
+                  href={`/prescriptions/${item.id}`}
+                >
+                  {item.prescriptionNumber ?? "Draft prescription"}
+                </Link>
+                <span className="text-sm text-slate-600">
+                  {item.status}
+                  {item.issueDate ? ` · ${item.issueDate}` : ""}
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
     </section>
   );

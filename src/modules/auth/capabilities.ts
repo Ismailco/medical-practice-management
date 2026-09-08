@@ -26,9 +26,13 @@ export const capabilities = [
   "followups.update",
   "followups.transition",
   "prescriptions.read",
-  "prescriptions.write",
+  "prescriptions.create",
+  "prescriptions.update_draft",
   "prescriptions.finalize",
-  "prescriptions.print",
+  "prescriptions.duplicate",
+  "prescriptions.replace",
+  "prescriptions.void",
+  "practice_profile.manage",
   "audit.read",
 ] as const;
 

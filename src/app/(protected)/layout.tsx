@@ -34,9 +34,22 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
                 Follow-ups
               </Link>
             ) : null}
+            {hasCapability(currentSession.user.role, "prescriptions.read") ? (
+              <Link className="text-sm text-slate-600 hover:text-slate-950" href="/prescriptions">
+                Prescriptions
+              </Link>
+            ) : null}
             {hasCapability(currentSession.user.role, "users.manage_secretaries") ? (
               <Link className="text-sm text-slate-600 hover:text-slate-950" href="/settings/users">
                 Staff accounts
+              </Link>
+            ) : null}
+            {hasCapability(currentSession.user.role, "practice_profile.manage") ? (
+              <Link
+                className="text-sm text-slate-600 hover:text-slate-950"
+                href="/settings/practice"
+              >
+                Practice profile
               </Link>
             ) : null}
           </div>

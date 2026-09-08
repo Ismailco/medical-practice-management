@@ -49,6 +49,14 @@ export const auditAction = pgEnum("audit_action", [
   "FOLLOW_UP_UPDATED",
   "FOLLOW_UP_COMPLETED",
   "FOLLOW_UP_CANCELLED",
+  "PRESCRIPTION_DRAFT_CREATED",
+  "PRESCRIPTION_DRAFT_UPDATED",
+  "PRESCRIPTION_DRAFT_DISCARDED",
+  "PRESCRIPTION_FINALIZED",
+  "PRESCRIPTION_VOIDED",
+  "PRESCRIPTION_DUPLICATED",
+  "PRESCRIPTION_REPLACEMENT_DRAFT_CREATED",
+  "PRACTICE_PROFILE_UPDATED",
 ]);
 
 export const appointmentStatus = pgEnum("appointment_status", [
@@ -62,6 +70,7 @@ export const appointmentStatus = pgEnum("appointment_status", [
 
 export const consultationStatus = pgEnum("consultation_status", ["IN_PROGRESS", "FINALIZED"]);
 export const followUpStatus = pgEnum("follow_up_status", ["PENDING", "COMPLETED", "CANCELLED"]);
+export const prescriptionStatus = pgEnum("prescription_status", ["DRAFT", "FINALIZED", "VOID"]);
 
 export const patientNumberSequence = pgSequence("patient_number_seq", {
   startWith: 1,
@@ -469,6 +478,211 @@ export const followUp = pgTable(
       "follow_up_lifecycle_metadata_check",
       sql`(${table.status} = 'PENDING' AND ${table.completedAt} IS NULL AND ${table.completedBy} IS NULL AND ${table.cancelledAt} IS NULL AND ${table.cancelledBy} IS NULL) OR (${table.status} = 'COMPLETED' AND ${table.completedAt} IS NOT NULL AND ${table.completedBy} IS NOT NULL AND ${table.cancelledAt} IS NULL AND ${table.cancelledBy} IS NULL) OR (${table.status} = 'CANCELLED' AND ${table.completedAt} IS NULL AND ${table.completedBy} IS NULL AND ${table.cancelledAt} IS NOT NULL AND ${table.cancelledBy} IS NOT NULL)`,
     ),
+  ],
+);
+
+export const prescriptionCounter = pgTable("prescription_counter", {
+  id: integer("id").primaryKey(),
+  nextNumber: integer("next_number").notNull(),
+});
+
+export const clinicProfile = pgTable(
+  "clinic_profile",
+  {
+    id: integer("id").primaryKey().default(1),
+    name: text("name").notNull(),
+    address: text("address"),
+    phone: text("phone"),
+    version: integer("version").default(1).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    check("clinic_profile_singleton_check", sql`${table.id} = 1`),
+    check("clinic_profile_name_check", sql`length(btrim(${table.name})) BETWEEN 1 AND 200`),
+    check(
+      "clinic_profile_address_check",
+      sql`${table.address} IS NULL OR length(${table.address}) <= 500`,
+    ),
+    check(
+      "clinic_profile_phone_check",
+      sql`${table.phone} IS NULL OR length(${table.phone}) <= 50`,
+    ),
+    check("clinic_profile_version_positive_check", sql`${table.version} >= 1`),
+  ],
+);
+
+export const doctorProfessionalProfile = pgTable(
+  "doctor_professional_profile",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "restrict" }),
+    displayName: text("display_name").notNull(),
+    specialty: text("specialty"),
+    professionalIdentifier: text("professional_identifier"),
+    version: integer("version").default(1).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    check(
+      "doctor_profile_display_name_check",
+      sql`length(btrim(${table.displayName})) BETWEEN 1 AND 200`,
+    ),
+    check(
+      "doctor_profile_specialty_check",
+      sql`${table.specialty} IS NULL OR length(${table.specialty}) <= 200`,
+    ),
+    check(
+      "doctor_profile_identifier_check",
+      sql`${table.professionalIdentifier} IS NULL OR length(${table.professionalIdentifier}) <= 200`,
+    ),
+    check("doctor_profile_version_positive_check", sql`${table.version} >= 1`),
+  ],
+);
+
+export const prescription = pgTable(
+  "prescription",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "restrict" }),
+    consultationId: uuid("consultation_id"),
+    doctorId: uuid("doctor_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    status: prescriptionStatus("status").default("DRAFT").notNull(),
+    prescriptionNumber: text("prescription_number"),
+    issuedAt: timestamp("issued_at", { withTimezone: true }),
+    issueDate: date("issue_date", { mode: "string" }),
+    replacesPrescriptionId: uuid("replaces_prescription_id"),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    voidedBy: uuid("voided_by").references(() => user.id, { onDelete: "restrict" }),
+    ...timestamps,
+    version: integer("version").default(1).notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.patientId, table.consultationId],
+      foreignColumns: [consultation.patientId, consultation.id],
+      name: "prescription_consultation_patient_fk",
+    }).onDelete("restrict"),
+    foreignKey({
+      columns: [table.patientId, table.replacesPrescriptionId],
+      foreignColumns: [table.patientId, table.id],
+      name: "prescription_replacement_patient_fk",
+    }).onDelete("restrict"),
+    foreignKey({
+      columns: [table.replacesPrescriptionId],
+      foreignColumns: [table.id],
+      name: "prescription_replaces_prescription_id_prescription_id_fk",
+    }).onDelete("restrict"),
+    uniqueIndex("prescription_patient_id_unique").on(table.patientId, table.id),
+    uniqueIndex("prescription_number_unique").on(table.prescriptionNumber),
+    uniqueIndex("prescription_issued_replacement_unique")
+      .on(table.replacesPrescriptionId)
+      .where(
+        sql`${table.status} IN ('FINALIZED', 'VOID') AND ${table.replacesPrescriptionId} IS NOT NULL`,
+      ),
+    index("prescription_patient_created_idx").on(table.patientId, table.createdAt),
+    index("prescription_status_created_idx").on(table.status, table.createdAt),
+    index("prescription_consultation_idx").on(table.consultationId),
+    index("prescription_replacement_idx").on(table.replacesPrescriptionId),
+    check("prescription_version_positive_check", sql`${table.version} >= 1`),
+    check(
+      "prescription_number_format_check",
+      sql`${table.prescriptionNumber} IS NULL OR ${table.prescriptionNumber} ~ '^RX-[0-9]{6,}$'`,
+    ),
+    check(
+      "prescription_state_metadata_check",
+      sql`(${table.status} = 'DRAFT' AND ${table.prescriptionNumber} IS NULL AND ${table.issuedAt} IS NULL AND ${table.issueDate} IS NULL AND ${table.voidedAt} IS NULL AND ${table.voidedBy} IS NULL) OR (${table.status} = 'FINALIZED' AND ${table.prescriptionNumber} IS NOT NULL AND ${table.issuedAt} IS NOT NULL AND ${table.issueDate} IS NOT NULL AND ${table.voidedAt} IS NULL AND ${table.voidedBy} IS NULL) OR (${table.status} = 'VOID' AND ${table.prescriptionNumber} IS NOT NULL AND ${table.issuedAt} IS NOT NULL AND ${table.issueDate} IS NOT NULL AND ${table.voidedAt} IS NOT NULL AND ${table.voidedBy} IS NOT NULL)`,
+    ),
+  ],
+);
+
+export const prescriptionItem = pgTable(
+  "prescription_item",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    prescriptionId: uuid("prescription_id")
+      .notNull()
+      .references(() => prescription.id, { onDelete: "restrict" }),
+    position: integer("position").notNull(),
+    medicationName: text("medication_name").notNull(),
+    dosage: text("dosage"),
+    form: text("form"),
+    frequency: text("frequency"),
+    duration: text("duration"),
+    quantity: text("quantity"),
+    route: text("route"),
+    instructions: text("instructions"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("prescription_item_position_unique").on(table.prescriptionId, table.position),
+    index("prescription_item_prescription_idx").on(table.prescriptionId, table.position),
+    check("prescription_item_position_check", sql`${table.position} >= 0`),
+    check(
+      "prescription_item_medication_name_check",
+      sql`length(btrim(${table.medicationName})) BETWEEN 1 AND 200`,
+    ),
+    check(
+      "prescription_item_dosage_check",
+      sql`${table.dosage} IS NULL OR length(${table.dosage}) <= 200`,
+    ),
+    check(
+      "prescription_item_form_check",
+      sql`${table.form} IS NULL OR length(${table.form}) <= 100`,
+    ),
+    check(
+      "prescription_item_frequency_check",
+      sql`${table.frequency} IS NULL OR length(${table.frequency}) <= 200`,
+    ),
+    check(
+      "prescription_item_duration_check",
+      sql`${table.duration} IS NULL OR length(${table.duration}) <= 200`,
+    ),
+    check(
+      "prescription_item_quantity_check",
+      sql`${table.quantity} IS NULL OR length(${table.quantity}) <= 100`,
+    ),
+    check(
+      "prescription_item_route_check",
+      sql`${table.route} IS NULL OR length(${table.route}) <= 100`,
+    ),
+    check(
+      "prescription_item_instructions_check",
+      sql`${table.instructions} IS NULL OR length(${table.instructions}) <= 1000`,
+    ),
+  ],
+);
+
+export const prescriptionIssueSnapshot = pgTable(
+  "prescription_issue_snapshot",
+  {
+    prescriptionId: uuid("prescription_id")
+      .primaryKey()
+      .references(() => prescription.id, { onDelete: "restrict" }),
+    patientNumber: text("patient_number").notNull(),
+    patientName: text("patient_name").notNull(),
+    patientDateOfBirth: date("patient_date_of_birth", { mode: "string" }).notNull(),
+    doctorName: text("doctor_name").notNull(),
+    doctorSpecialty: text("doctor_specialty"),
+    doctorProfessionalIdentifier: text("doctor_professional_identifier"),
+    clinicName: text("clinic_name").notNull(),
+    clinicAddress: text("clinic_address"),
+    clinicPhone: text("clinic_phone"),
+    templateVersion: text("template_version").notNull().default("phase6-v1"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      "prescription_snapshot_patient_number_check",
+      sql`length(btrim(${table.patientNumber})) > 0`,
+    ),
+    check("prescription_snapshot_patient_name_check", sql`length(btrim(${table.patientName})) > 0`),
+    check("prescription_snapshot_doctor_name_check", sql`length(btrim(${table.doctorName})) > 0`),
+    check("prescription_snapshot_clinic_name_check", sql`length(btrim(${table.clinicName})) > 0`),
   ],
 );
 

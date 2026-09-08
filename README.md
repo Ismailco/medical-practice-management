@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 5: Follow-up Management** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, append-only clinical-note history, and date-oriented follow-up work. Prescriptions and later clinical workflows are not implemented.
+**Phase 6: Prescription Management and Immutable History** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, and physician-entered prescription drafts with immutable issued history. PDF/printing and later clinical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -129,6 +129,12 @@ Doctors can create follow-ups for active patients or from either in-progress or 
 
 Pending follow-ups can be corrected with optimistic concurrency and then completed or cancelled exactly once. Terminal records cannot be edited, reopened, or deleted. A pending follow-up blocks patient archival; completed and cancelled history remains preserved without blocking archival. Follow-up reasons are doctor-only plain text, excluded from logs and audit metadata, and served with private/no-store caching. Notifications and reminders are intentionally not implemented.
 
+## Prescription management
+
+Doctors create and edit physician-entered draft prescriptions, then explicitly finalize them. Finalization allocates a transactional `RX-000001`-style number, stores the clinic-local issue date, and captures an immutable patient/doctor/clinic issue snapshot. Issued prescriptions are immutable; corrections use a new replacement draft, while duplication creates an independent draft with no lineage. Issued records may be voided without deletion. Prescription items are bounded plain text with deterministic positions, and the application provides no recommendations, medication database, interaction checking, or decision support.
+
+Practice and doctor professional profiles are doctor-only and versioned. Draft prescriptions block patient archival; finalized and void prescriptions do not. Prescription APIs and pages are private/no-store, and medication content is excluded from logs, audit metadata, URLs, browser storage, and secretary DTOs. PDF generation, printing, signatures, stamps, and jurisdiction-specific legal formatting are deferred to Phase 7.
+
 ## Project structure
 
 ```text
@@ -141,6 +147,7 @@ src/modules/patients/ administrative patient validation, DTOs, queries, services
 src/modules/appointments/ scheduling, timezone, lifecycle, DTOs, queries, services
 src/modules/consultations/ doctor-only clinical DTOs, validation, queries, services
 src/modules/follow-ups/ doctor-only follow-up lifecycle, DTOs, queries, services
+src/modules/prescriptions/ doctor-only drafts, immutable history, profiles, DTOs, queries, services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -148,7 +155,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Prescription, medication, notification, attachment, and billing modules do not exist. They will be added only in explicitly approved later phases.
+Medication intelligence, notification, attachment, and billing modules do not exist. PDF/printing is intentionally deferred; prescription record/history modules are part of Phase 6.
 
 ## Documentation
 

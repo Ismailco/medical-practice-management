@@ -1,8 +1,8 @@
 # Data model
 
-## Phase 5 state
+## Phase 6 state
 
-The database contains authentication/security infrastructure, administrative patient and appointment records, doctor-only consultation history, and doctor-only follow-up records. No prescription, medication, notification, attachment, or billing structures exist.
+The database contains authentication/security infrastructure, administrative patient and appointment records, doctor-only consultation history, doctor-only follow-up records, and doctor-only prescription records with immutable issue snapshots. No medication catalog, notification, attachment, or billing structures exist.
 
 The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
 
@@ -26,14 +26,14 @@ Sessions and accounts cascade when their user is removed. Audit actor references
 | Area                   | Planned entities                                                       | Phase |
 | ---------------------- | ---------------------------------------------------------------------- | ----: |
 | Identity and access    | User, auth session/account tables, login throttle, AuditLog foundation |     1 |
-| Clinic configuration   | Clinic, DoctorProfile                                                  | Later |
+| Clinic configuration   | ClinicProfile, DoctorProfessionalProfile                               |     6 |
 | Patient administration | Patient                                                                |     2 |
 | Scheduling             | Appointment                                                            |     3 |
 | Clinical records       | Consultation, ClinicalNoteRevision, ClinicalNoteAddendum               |     4 |
 | Follow-up work         | FollowUp                                                               |     5 |
-| Prescribing            | Prescription, PrescriptionItem, DocumentCounter                        |     6 |
+| Prescribing            | Prescription, PrescriptionItem, PrescriptionIssueSnapshot, Counter     |     6 |
 
-Clinic and doctor-profile tables remain deferred. The initial Patient model does not contain sex/gender, government identifiers, free-text notes, insurance, or clinical information.
+The initial Patient model does not contain sex/gender, government identifiers, free-text notes, insurance, or clinical information.
 
 ## Patient administration
 
@@ -83,9 +83,17 @@ Consultation-linked creation supports both in-progress and finalized consultatio
 
 Due-today, overdue, and upcoming classification compares PostgreSQL `date` values with the current calendar date derived in `CLINIC_TIMEZONE`; no UTC timestamp conversion is applied to a follow-up date. Application-created records accept today or a future date. The database deliberately permits older dates for controlled imports. Operational sections are ordered by due date and bounded to 50 records each.
 
+## Prescriptions
+
+`prescription` stores a patient, optional same-patient consultation, authoring doctor, `DRAFT`, `FINALIZED`, or `VOID` status, optional replacement lineage, issue metadata, and an optimistic version. Draft creation does not allocate a number. Draft items are physician-entered bounded plain text with unique zero-based positions and can be transactionally replaced by a versioned save. Issued items and parent medical identity are protected by PostgreSQL triggers.
+
+`prescription_counter` is a singleton transactional counter. Finalization locks it, allocates the next `RX-000001`-style number, calculates the clinic-local `issue_date`, creates one `prescription_issue_snapshot`, and commits the issued state in one transaction. A deferred constraint trigger requires exactly one snapshot for every committed issued prescription. Snapshot rows are explicit typed columns and immutable, preserving patient, doctor, and clinic identity when live records later change.
+
+`clinic_profile` and `doctor_professional_profile` are one-clinic/one-doctor versioned settings. DRAFT prescriptions block archival; FINALIZED and VOID prescriptions do not. Replacement drafts retain a same-patient `replaces_prescription_id` and may be issued only once per original through a partial unique index. Duplication copies physician-entered items into an independent draft without issue metadata or replacement lineage. No PDF, print, medication catalog, interaction, or recommendation structures exist.
+
 ## Historical integrity
 
-Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Follow-ups preserve terminal history and expose no hard-delete operation. Finalized prescriptions will receive equivalent history controls in their later phase. Issued prescription PDFs will be regenerated from an immutable issue snapshot and versioned renderer; PDF binaries are not stored in V1.
+Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Follow-ups preserve terminal history and expose no hard-delete operation. Finalized and void prescriptions preserve their issue snapshots and item history; only a new replacement can correct them. Phase 7 may render the snapshot through a versioned renderer; PDF binaries are not stored in V1.
 
 ## Retention
 

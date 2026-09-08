@@ -23,6 +23,9 @@ describe("sensitive route caching", () => {
     "/consultations",
     "/follow-ups",
     "/api/follow-ups/10000000-0000-4000-8000-000000000001",
+    "/prescriptions",
+    "/api/prescriptions/10000000-0000-4000-8000-000000000001",
+    "/settings/practice",
   ])("forces private no-store caching for %s", (path) => {
     expect(requiresPrivateNoStore(path)).toBe(true);
     const response = proxy(new NextRequest(`https://clinic.test${path}`));

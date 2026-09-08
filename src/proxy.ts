@@ -12,7 +12,13 @@ export function requiresPrivateNoStore(pathname: string): boolean {
     pathname === "/api/consultations" ||
     pathname.startsWith("/api/consultations/") ||
     pathname === "/api/follow-ups" ||
-    pathname.startsWith("/api/follow-ups/")
+    pathname.startsWith("/api/follow-ups/") ||
+    pathname === "/prescriptions" ||
+    pathname.startsWith("/prescriptions/") ||
+    pathname === "/api/prescriptions" ||
+    pathname.startsWith("/api/prescriptions/") ||
+    pathname === "/api/settings/practice" ||
+    pathname === "/settings/practice"
   );
 }
 

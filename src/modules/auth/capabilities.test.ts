@@ -15,6 +15,13 @@ describe("capability policy", () => {
     expect(hasCapability("DOCTOR", "followups.create")).toBe(true);
     expect(hasCapability("DOCTOR", "followups.update")).toBe(true);
     expect(hasCapability("DOCTOR", "followups.transition")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.read")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.create")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.update_draft")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.duplicate")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.replace")).toBe(true);
+    expect(hasCapability("DOCTOR", "prescriptions.void")).toBe(true);
+    expect(hasCapability("DOCTOR", "practice_profile.manage")).toBe(true);
   });
 
   it("limits secretaries to the authenticated shell and administrative workflows", () => {
@@ -35,5 +42,12 @@ describe("capability policy", () => {
     expect(hasCapability("SECRETARY", "followups.update")).toBe(false);
     expect(hasCapability("SECRETARY", "followups.transition")).toBe(false);
     expect(hasCapability("SECRETARY", "prescriptions.read")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.create")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.update_draft")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.finalize")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.duplicate")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.replace")).toBe(false);
+    expect(hasCapability("SECRETARY", "prescriptions.void")).toBe(false);
+    expect(hasCapability("SECRETARY", "practice_profile.manage")).toBe(false);
   });
 });

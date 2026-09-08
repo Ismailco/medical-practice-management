@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { appointment, auditLog, consultation, followUp, patient } from "@/db/schema";
+import { appointment, auditLog, consultation, followUp, patient, prescription } from "@/db/schema";
 import { ConflictError, NotFoundError } from "@/modules/auth/errors";
 import { toAdministrativePatient, type AdministrativePatient } from "./dto";
 import {
@@ -174,6 +174,17 @@ export async function changePatientArchiveState(
       if (pendingFollowUp) {
         throw new ConflictError(
           "Complete or cancel the patient's pending follow-ups before archiving the record.",
+        );
+      }
+
+      const [draftPrescription] = await transaction
+        .select({ id: prescription.id })
+        .from(prescription)
+        .where(and(eq(prescription.patientId, patientId), eq(prescription.status, "DRAFT")))
+        .limit(1);
+      if (draftPrescription) {
+        throw new ConflictError(
+          "Discard or finalize the patient's draft prescriptions before archiving the record.",
         );
       }
     }

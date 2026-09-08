@@ -47,6 +47,22 @@ const nextConfig: NextConfig = {
         headers: privateNoStoreHeaders,
       },
       {
+        source: "/prescriptions/:path*",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/api/prescriptions/:path*",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/settings/practice",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/api/settings/practice",
+        headers: privateNoStoreHeaders,
+      },
+      {
         source: "/dashboard",
         headers: privateNoStoreHeaders,
       },

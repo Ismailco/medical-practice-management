@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 5 provides authentication, staff administration, administrative patient records, appointment scheduling, doctor-only consultations with immutable clinical-note history, and doctor-only follow-up management.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 6 provides authentication, staff administration, administrative patient records, appointment scheduling, doctor-only consultations with immutable clinical-note history, doctor-only follow-up management, and doctor-only prescription history.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -72,6 +72,10 @@ Clinical pages are dynamically rendered with private, no-store cache policy. Ser
 The follow-up module owns doctor-only sensitive reasons, clinic-local due-date classification, explicit DTOs, pending-record corrections, and terminal completion/cancellation. A consultation link is optional and does not mutate consultation content; linked creation derives the patient from the consultation, while a composite database foreign key prevents cross-patient links.
 
 Patient-row locking coordinates creation with archival. Pending work blocks archival, while completed and cancelled history remains immutable and does not. Dashboard, patient, consultation, API, and navigation integrations authorize follow-up capabilities before loading follow-up DTOs. No reminder, messaging, calendar, or notification infrastructure exists.
+
+## Prescription boundary
+
+The prescription module is documentation-only: doctors enter medication content, save drafts, and issue immutable records. It owns transactional numbering, draft/item concurrency, replacement lineage, practice profiles, and issue snapshots for a future renderer. Issued medical content and its snapshot are protected by service rules and PostgreSQL triggers. It does not recommend medication or implement drug data, interaction checking, printing, PDF generation, or notifications.
 
 ## Health model
 
