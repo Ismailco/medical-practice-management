@@ -17,6 +17,8 @@ import {
 import { clinicToday } from "@/modules/appointments/timezone";
 import { ConflictError, NotFoundError } from "@/modules/auth/errors";
 import type { SafeUser } from "@/modules/auth/session";
+import { findIssuedPrescriptionDocumentData, findPrescriptionDetail } from "./repository";
+import { renderPrescription } from "./pdf";
 import {
   practiceProfileInputSchema,
   prescriptionCreationInputSchema,
@@ -33,6 +35,45 @@ export type PrescriptionMutationResult = Readonly<{
   version: number;
   prescriptionNumber: string | null;
 }>;
+
+export type PrescriptionPdfResult = Readonly<{
+  bytes: Buffer;
+  filename: string;
+  pageCount: number;
+}>;
+
+export async function generatePrescriptionPdf(
+  id: string,
+  actor: SafeUser,
+): Promise<PrescriptionPdfResult> {
+  const detail = await findPrescriptionDetail(id);
+  if (!detail) throw new NotFoundError();
+  if (detail.doctorId !== actor.id) throw new ConflictError("Prescription access denied.");
+  if (detail.status === "DRAFT") {
+    throw new ConflictError("Only issued prescriptions can generate a PDF.");
+  }
+  const data = await findIssuedPrescriptionDocumentData(id);
+  if (!data) throw new ConflictError("This issued prescription cannot be rendered safely.");
+  const rendered = await renderPrescription(data);
+  await db.insert(auditLog).values({
+    actorUserId: actor.id,
+    action: "PRESCRIPTION_PDF_GENERATED",
+    entityType: "prescription",
+    entityId: id,
+    metadata: {
+      status: data.status,
+      rendererVersion: data.templateVersion,
+      replaced: data.isReplaced,
+      pageCount: rendered.pageCount,
+    },
+  });
+  const safeNumber = data.prescriptionNumber.replace(/[^A-Za-z0-9_-]/g, "_");
+  return {
+    bytes: rendered.bytes,
+    filename: `prescription-${safeNumber}.pdf`,
+    pageCount: rendered.pageCount,
+  };
+}
 
 function auditMetadata(
   status: "DRAFT" | "FINALIZED" | "VOID",

@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 6: Prescription Management and Immutable History** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, and physician-entered prescription drafts with immutable issued history. PDF/printing and later clinical workflows are not implemented.
+**Phase 7: Prescription PDF Generation and Printing** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. Later clinical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -133,7 +133,7 @@ Pending follow-ups can be corrected with optimistic concurrency and then complet
 
 Doctors create and edit physician-entered draft prescriptions, then explicitly finalize them. Finalization allocates a transactional `RX-000001`-style number, stores the clinic-local issue date, and captures an immutable patient/doctor/clinic issue snapshot. Issued prescriptions are immutable; corrections use a new replacement draft, while duplication creates an independent draft with no lineage. Issued records may be voided without deletion. Prescription items are bounded plain text with deterministic positions, and the application provides no recommendations, medication database, interaction checking, or decision support.
 
-Practice and doctor professional profiles are doctor-only and versioned. Draft prescriptions block patient archival; finalized and void prescriptions do not. Prescription APIs and pages are private/no-store, and medication content is excluded from logs, audit metadata, URLs, browser storage, and secretary DTOs. PDF generation, printing, signatures, stamps, and jurisdiction-specific legal formatting are deferred to Phase 7.
+Practice and doctor professional profiles are doctor-only and versioned. Draft prescriptions block patient archival; finalized and void prescriptions do not. Prescription APIs and pages are private/no-store, and medication content is excluded from logs, audit metadata, URLs, browser storage, and secretary DTOs. Finalized and void prescriptions can be regenerated as in-memory A4 PDFs from immutable snapshot/item data; PDFs are never stored. The browser's native PDF viewer handles printing, and the app audits generation rather than claiming physical printer completion.
 
 ## Project structure
 
@@ -155,7 +155,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Medication intelligence, notification, attachment, and billing modules do not exist. PDF/printing is intentionally deferred; prescription record/history modules are part of Phase 6.
+Medication intelligence, notification, attachment, billing, signature/stamp images, and PDF-byte archival modules do not exist. Arabic/RTL rendering and jurisdiction-specific legal formatting remain deferred.
 
 ## Documentation
 

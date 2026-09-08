@@ -32,6 +32,7 @@ export const capabilities = [
   "prescriptions.duplicate",
   "prescriptions.replace",
   "prescriptions.void",
+  "prescriptions.pdf_generate",
   "practice_profile.manage",
   "audit.read",
 ] as const;

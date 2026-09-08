@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for Phase 6.
+Accepted for Phase 6 and extended for Phase 7.
 
 ## Decision
 
@@ -16,4 +16,6 @@ Corrections create a new replacement draft linked to the unchanged original. A c
 
 ## Consequences
 
-Historical rendering can use the stored patient, doctor, clinic, issue-date, and template-version values even after live profiles or patient administration change. Phase 7 may consume these immutable fields and items for printing/PDF generation. This phase deliberately provides no medication recommendations, drug catalog, interaction checking, signatures, or jurisdiction-specific legal claims.
+Historical rendering can use the stored patient, doctor, clinic, issue-date, and template-version values even after live profiles or patient administration change. Phase 7 uses PDFKit 0.20 as a direct Node renderer with no browser or external network dependency. The V1 renderer uses A4 portrait layout, predictable built-in Helvetica/Helvetica-Bold fonts, bounded text wrapping, pagination, and a reserved physical signature/stamp area. It dispatches explicitly on `phase6-v1`; unknown versions fail closed. Arabic/RTL shaping, uploaded images, signatures, and stamps remain deferred.
+
+PDF bytes are generated in memory and are not persisted. Re-generation guarantees the same visible semantic content and layout for the same immutable snapshot, finalized item order, lifecycle overlay, and renderer version; PDF metadata, object identifiers, and compression internals are not claimed byte-for-byte deterministic. Finalized and void records may be rendered from their immutable source. VOID records receive `VOID / NOT VALID FOR USE`; records with an issued direct replacement receive `REPLACED / SUPERSEDED`. PDF generation is audited as `PRESCRIPTION_PDF_GENERATED`; the application does not claim physical printer completion or emit a print-success event.

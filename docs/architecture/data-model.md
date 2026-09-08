@@ -1,6 +1,6 @@
 # Data model
 
-## Phase 6 state
+## Phase 7 state
 
 The database contains authentication/security infrastructure, administrative patient and appointment records, doctor-only consultation history, doctor-only follow-up records, and doctor-only prescription records with immutable issue snapshots. No medication catalog, notification, attachment, or billing structures exist.
 
@@ -89,11 +89,11 @@ Due-today, overdue, and upcoming classification compares PostgreSQL `date` value
 
 `prescription_counter` is a singleton transactional counter. Finalization locks it, allocates the next `RX-000001`-style number, calculates the clinic-local `issue_date`, creates one `prescription_issue_snapshot`, and commits the issued state in one transaction. A deferred constraint trigger requires exactly one snapshot for every committed issued prescription. Snapshot rows are explicit typed columns and immutable, preserving patient, doctor, and clinic identity when live records later change.
 
-`clinic_profile` and `doctor_professional_profile` are one-clinic/one-doctor versioned settings. DRAFT prescriptions block archival; FINALIZED and VOID prescriptions do not. Replacement drafts retain a same-patient `replaces_prescription_id` and may be issued only once per original through a partial unique index. Duplication copies physician-entered items into an independent draft without issue metadata or replacement lineage. No PDF, print, medication catalog, interaction, or recommendation structures exist.
+`clinic_profile` and `doctor_professional_profile` are one-clinic/one-doctor versioned settings. DRAFT prescriptions block archival; FINALIZED and VOID prescriptions do not. Replacement drafts retain a same-patient `replaces_prescription_id` and may be issued only once per original through a partial unique index. Duplication copies physician-entered items into an independent draft without issue metadata or replacement lineage. PDF responses are regenerated in memory from the immutable issue snapshot and finalized items; no PDF bytes, print jobs, medication catalog, interaction, or recommendation structures exist.
 
 ## Historical integrity
 
-Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Follow-ups preserve terminal history and expose no hard-delete operation. Finalized and void prescriptions preserve their issue snapshots and item history; only a new replacement can correct them. Phase 7 may render the snapshot through a versioned renderer; PDF binaries are not stored in V1.
+Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Follow-ups preserve terminal history and expose no hard-delete operation. Finalized and void prescriptions preserve their issue snapshots and item history; only a new replacement can correct them. Phase 7 renders the snapshot through an explicit versioned renderer; PDF binaries are not stored in V1.
 
 ## Retention
 

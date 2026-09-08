@@ -24,6 +24,7 @@ import { GET as getPrescriptionRoute } from "@/app/api/prescriptions/[id]/route"
 import { POST as replacePrescriptionRoute } from "@/app/api/prescriptions/[id]/replace/route";
 import { POST as savePrescriptionRoute } from "@/app/api/prescriptions/[id]/save/route";
 import { POST as voidPrescriptionRoute } from "@/app/api/prescriptions/[id]/void/route";
+import { POST as generatePrescriptionPdfRoute } from "@/app/api/prescriptions/[id]/pdf/route";
 import {
   GET as listPrescriptionsRoute,
   POST as createPrescriptionRoute,
@@ -2022,6 +2023,13 @@ async function responseFollowUpId(response: Response): Promise<string> {
   return body.followUp.id;
 }
 
+async function responsePdfText(response: Response): Promise<string> {
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return [...bytes.toString("latin1").matchAll(/<([0-9a-f]+)>/g)]
+    .map((match) => (match[1] ? Buffer.from(match[1], "hex").toString("latin1") : ""))
+    .join("");
+}
+
 function shiftCalendarDate(value: string, days: number): string {
   const date = new Date(`${value}T00:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + days);
@@ -2211,9 +2219,16 @@ describe("doctor-only prescription workflows", () => {
         .where(eq(prescriptionIssueSnapshot.prescriptionId, draft.id)),
     ).rejects.toThrow();
     await expect(db.delete(prescription).where(eq(prescription.id, draft.id))).rejects.toThrow();
+    const [currentPatient] = await db
+      .select({ version: patient.version })
+      .from(patient)
+      .where(eq(patient.id, patientRecord.id));
     const updatedPatient = await updatePatientAdministrativeData(
       patientRecord.id,
-      { ...patientInput("Prescription History Updated"), expectedVersion: patientRecord.version },
+      {
+        ...patientInput("Prescription History Updated"),
+        expectedVersion: currentPatient?.version ?? patientRecord.version,
+      },
       doctor.id,
     );
     expect(updatedPatient.firstName).toContain("Updated");
@@ -2540,6 +2555,111 @@ describe("doctor-only prescription workflows", () => {
     } finally {
       for (const spy of spies) spy.mockRestore();
     }
+  });
+
+  it("generates private historical PDFs and marks issued lifecycle overlays", async () => {
+    await configurePracticeProfile();
+    const patientRecord = await createPatient(patientInput("PDF History"), doctor.id);
+    const draft = await createPrescriptionDraft({ patientId: patientRecord.id }, doctorActor());
+    const saved = await savePrescriptionDraft(
+      draft.id,
+      { expectedVersion: 1, consultationId: null, items: privatePrescriptionItems },
+      doctorActor(),
+    );
+    const issued = await finalizePrescription(
+      draft.id,
+      { expectedVersion: saved.version },
+      doctorActor(),
+    );
+    await updatePatientAdministrativeData(
+      patientRecord.id,
+      { ...patientInput("PDF History Updated"), expectedVersion: patientRecord.version },
+      doctor.id,
+    );
+    await savePracticeProfile(
+      {
+        clinic: { name: "Synthetic Clinic B", address: "Changed", phone: null, expectedVersion: 1 },
+        doctor: {
+          displayName: "Dr. Changed",
+          specialty: "Changed",
+          professionalIdentifier: "SYN-002",
+          expectedVersion: 1,
+        },
+      },
+      doctorActor(),
+    );
+    const doctorLogin = await signIn(doctor.email, doctorPassword, "192.0.2.134");
+    const response = await generatePrescriptionPdfRoute(
+      request(`/api/prescriptions/${draft.id}/pdf`, { cookie: doctorLogin.cookie, body: {} }),
+      prescriptionContext(draft.id),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/pdf");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("pragma")).toBe("no-cache");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("content-disposition")).toBe(
+      'inline; filename="prescription-RX-000001.pdf"',
+    );
+    const issuedPdfText = await responsePdfText(response);
+    expect(issuedPdfText).toContain("Synthetic Clinic A");
+    expect(issuedPdfText).toContain("Synthetic PDF History Patient");
+    expect(issuedPdfText).not.toContain("Synthetic Clinic B");
+    expect(issuedPdfText).not.toContain("Synthetic PDF History Updated Patient");
+    expect(issuedPdfText).toContain("TEST_MEDICATION_PRIVATE_78123");
+    expect(issuedPdfText).toContain("RX-000001");
+
+    const draftOnly = await createPrescriptionDraft({ patientId: patientRecord.id }, doctorActor());
+    const draftResponse = await generatePrescriptionPdfRoute(
+      request(`/api/prescriptions/${draftOnly.id}/pdf`, { cookie: doctorLogin.cookie, body: {} }),
+      prescriptionContext(draftOnly.id),
+    );
+    expect(draftResponse.status).toBe(409);
+    expect(await draftResponse.text()).not.toContain("TEST_MEDICATION_PRIVATE_78123");
+
+    const secretaryLogin = await signIn(secretary.email, secretaryPassword, "192.0.2.135");
+    const secretaryResponse = await generatePrescriptionPdfRoute(
+      request(`/api/prescriptions/${draft.id}/pdf`, { cookie: secretaryLogin.cookie, body: {} }),
+      prescriptionContext(draft.id),
+    );
+    expect(secretaryResponse.status).toBe(403);
+    expect(await secretaryResponse.text()).not.toContain("TEST_MEDICATION_PRIVATE_78123");
+    expect(
+      (
+        await generatePrescriptionPdfRoute(
+          request(`/api/prescriptions/${draft.id}/pdf`, { body: {} }),
+          prescriptionContext(draft.id),
+        )
+      ).status,
+    ).toBe(401);
+
+    const voided = await voidPrescription(
+      draft.id,
+      { expectedVersion: issued.version },
+      doctorActor(),
+    );
+    const voidResponse = await generatePrescriptionPdfRoute(
+      request(`/api/prescriptions/${draft.id}/pdf`, { cookie: doctorLogin.cookie, body: {} }),
+      prescriptionContext(draft.id),
+    );
+    expect(voided.status).toBe("VOID");
+    expect(await responsePdfText(voidResponse)).toContain("VOID");
+    const replacement = await createReplacementPrescription(draft.id, doctorActor());
+    const replacementIssued = await finalizePrescription(
+      replacement.id,
+      { expectedVersion: 1 },
+      doctorActor(),
+    );
+    expect(replacementIssued.status).toBe("FINALIZED");
+    const replacedResponse = await generatePrescriptionPdfRoute(
+      request(`/api/prescriptions/${draft.id}/pdf`, { cookie: doctorLogin.cookie, body: {} }),
+      prescriptionContext(draft.id),
+    );
+    expect(await responsePdfText(replacedResponse)).toContain("REPLACED / SUPERSEDED");
+    const auditEvents = await db.select().from(auditLog).where(eq(auditLog.entityId, draft.id));
+    const audit = JSON.stringify(auditEvents.map((event) => event.metadata));
+    expect(auditEvents.some((event) => event.action === "PRESCRIPTION_PDF_GENERATED")).toBe(true);
+    expect(audit).not.toContain("TEST_MEDICATION_PRIVATE_78123");
   });
 });
 

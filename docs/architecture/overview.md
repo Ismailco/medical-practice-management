@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 6 provides authentication, staff administration, administrative patient records, appointment scheduling, doctor-only consultations with immutable clinical-note history, doctor-only follow-up management, and doctor-only prescription history.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 7 provides authentication, staff administration, administrative patient records, appointment scheduling, doctor-only consultations with immutable clinical-note history, doctor-only follow-up management, immutable doctor-only prescription history, and server-generated prescription PDFs.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -75,7 +75,7 @@ Patient-row locking coordinates creation with archival. Pending work blocks arch
 
 ## Prescription boundary
 
-The prescription module is documentation-only: doctors enter medication content, save drafts, and issue immutable records. It owns transactional numbering, draft/item concurrency, replacement lineage, practice profiles, and issue snapshots for a future renderer. Issued medical content and its snapshot are protected by service rules and PostgreSQL triggers. It does not recommend medication or implement drug data, interaction checking, printing, PDF generation, or notifications.
+The prescription module is documentation-only: doctors enter medication content, save drafts, issue immutable records, and regenerate A4 PDFs. It owns transactional numbering, draft/item concurrency, replacement lineage, practice profiles, issue snapshots, and versioned PDF rendering from immutable data. Issued medical content and its snapshot are protected by service rules and PostgreSQL triggers. It does not recommend medication or implement drug data, interaction checking, signatures/images, stored PDF bytes, or notifications.
 
 ## Health model
 

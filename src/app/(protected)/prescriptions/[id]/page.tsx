@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { PrescriptionActions } from "@/components/prescription-actions";
 import { PrescriptionDraftEditor } from "@/components/prescription-draft-editor";
+import { PrescriptionPdfButton } from "@/components/prescription-pdf-button";
 import { requirePageCapability } from "@/modules/auth/page";
 import { findPrescriptionDetail } from "@/modules/prescriptions/repository";
 import { prescriptionIdSchema } from "@/modules/prescriptions/validation";
@@ -90,6 +91,9 @@ export default async function PrescriptionDetailPage({
             )}
           </section>
           <ItemList items={record.items} />
+          <div className="mt-6">
+            <PrescriptionPdfButton prescriptionId={record.id} voided={record.status === "VOID"} />
+          </div>
         </>
       )}
       {record.replacesPrescriptionId ? (

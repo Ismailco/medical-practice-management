@@ -1,6 +1,6 @@
 import "server-only";
 
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -18,6 +18,7 @@ import type {
   PrescriptionSummaryDto,
   PrescriptionSnapshotDto,
 } from "./dto";
+import type { IssuedPrescriptionDocumentData } from "./pdf";
 
 const summarySelection = {
   id: prescription.id,
@@ -193,6 +194,98 @@ export function listConsultationPrescriptions(
   consultationId: string,
 ): Promise<readonly PrescriptionSummaryDto[]> {
   return listPrescriptionsByConsultation(consultationId);
+}
+
+export async function findIssuedPrescriptionDocumentData(
+  id: string,
+): Promise<IssuedPrescriptionDocumentData | null> {
+  try {
+    const [record] = await db
+      .select({
+        prescriptionNumber: prescription.prescriptionNumber,
+        issueDate: prescription.issueDate,
+        status: prescription.status,
+        snapshot: {
+          patientNumber: prescriptionIssueSnapshot.patientNumber,
+          patientName: prescriptionIssueSnapshot.patientName,
+          patientDateOfBirth: prescriptionIssueSnapshot.patientDateOfBirth,
+          doctorName: prescriptionIssueSnapshot.doctorName,
+          doctorSpecialty: prescriptionIssueSnapshot.doctorSpecialty,
+          doctorProfessionalIdentifier: prescriptionIssueSnapshot.doctorProfessionalIdentifier,
+          clinicName: prescriptionIssueSnapshot.clinicName,
+          clinicAddress: prescriptionIssueSnapshot.clinicAddress,
+          clinicPhone: prescriptionIssueSnapshot.clinicPhone,
+          templateVersion: prescriptionIssueSnapshot.templateVersion,
+        },
+      })
+      .from(prescription)
+      .leftJoin(
+        prescriptionIssueSnapshot,
+        eq(prescriptionIssueSnapshot.prescriptionId, prescription.id),
+      )
+      .where(eq(prescription.id, id))
+      .limit(1);
+    if (!record) return null;
+    if (record.status !== "FINALIZED" && record.status !== "VOID") return null;
+    const snapshot = record.snapshot;
+    if (!record.prescriptionNumber || !record.issueDate || !snapshot?.templateVersion) {
+      throw new Error("Issued prescription snapshot is incomplete.");
+    }
+    const items = await db
+      .select({
+        position: prescriptionItem.position,
+        medicationName: prescriptionItem.medicationName,
+        dosage: prescriptionItem.dosage,
+        form: prescriptionItem.form,
+        frequency: prescriptionItem.frequency,
+        duration: prescriptionItem.duration,
+        quantity: prescriptionItem.quantity,
+        route: prescriptionItem.route,
+        instructions: prescriptionItem.instructions,
+      })
+      .from(prescriptionItem)
+      .where(eq(prescriptionItem.prescriptionId, id))
+      .orderBy(asc(prescriptionItem.position));
+    if (items.length === 0) throw new Error("Issued prescription has no items.");
+    const [replacement] = await db
+      .select({ id: prescription.id })
+      .from(prescription)
+      .where(
+        and(
+          eq(prescription.replacesPrescriptionId, id),
+          inArray(prescription.status, ["FINALIZED", "VOID"]),
+        ),
+      )
+      .limit(1);
+    return {
+      prescriptionNumber: record.prescriptionNumber,
+      issueDate: record.issueDate,
+      status: record.status,
+      isReplaced: Boolean(replacement),
+      templateVersion: snapshot.templateVersion,
+      patient: {
+        number: snapshot.patientNumber,
+        name: snapshot.patientName,
+        dateOfBirth: snapshot.patientDateOfBirth,
+      },
+      doctor: {
+        name: snapshot.doctorName,
+        specialty: snapshot.doctorSpecialty,
+        professionalIdentifier: snapshot.doctorProfessionalIdentifier,
+      },
+      clinic: {
+        name: snapshot.clinicName,
+        address: snapshot.clinicAddress,
+        phone: snapshot.clinicPhone,
+      },
+      items,
+    };
+  } catch {
+    logError("Prescription PDF source lookup failed", {
+      errorCode: "PRESCRIPTION_PDF_SOURCE_FAILED",
+    });
+    throw new Error("This issued prescription cannot be rendered safely.");
+  }
 }
 
 async function listPrescriptionsByConsultation(
