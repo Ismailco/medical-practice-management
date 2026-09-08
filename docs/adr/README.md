@@ -16,6 +16,7 @@ Accepted foundation decisions are recorded here. Later feature decisions are add
 | [010](010-clinical-record-revisions-and-finalization.md) | Clinical revisions and finalization |
 | [011](011-append-only-audit-log.md)                      | Append-only audit logging           |
 | [012](012-timezone-date-handling.md)                     | Timezone and date handling          |
+| [013](013-follow-up-lifecycle-and-dates.md)              | Follow-up lifecycle and dates       |
 | [014](014-encryption-boundaries.md)                      | Encryption boundaries               |
 | [016](016-postgresql-rls-deferred.md)                    | PostgreSQL RLS deferred             |
 | [017](017-internationalization.md)                       | Internationalization architecture   |

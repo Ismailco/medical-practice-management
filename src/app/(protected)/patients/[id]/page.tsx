@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 
 import { PatientLifecycleButton } from "@/components/patient-lifecycle-button";
 import { StartDirectConsultationButton } from "@/components/start-direct-consultation-button";
+import { FollowUpCreateForm } from "@/components/follow-up-create-form";
 import { hasCapability } from "@/modules/auth/capabilities";
 import { requirePageCapability } from "@/modules/auth/page";
 import { listPatientAppointments } from "@/modules/appointments/repository";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import { appointmentHistoryQuerySchema } from "@/modules/appointments/validation";
 import { listPatientConsultations } from "@/modules/consultations/repository";
+import { listPatientFollowUps } from "@/modules/follow-ups/repository";
 import { findAdministrativePatientById } from "@/modules/patients/repository";
 import { patientIdSchema } from "@/modules/patients/validation";
 
@@ -33,6 +35,8 @@ export default async function PatientPage({ params, searchParams }: PageContext)
   const appointmentHistory = await listPatientAppointments(patient.id, historyPage);
   const canReadConsultations = hasCapability(currentUser.role, "consultations.read");
   const consultations = canReadConsultations ? await listPatientConsultations(patient.id) : [];
+  const canReadFollowUps = hasCapability(currentUser.role, "followups.read_sensitive");
+  const followUps = canReadFollowUps ? await listPatientFollowUps(patient.id) : [];
 
   return (
     <section className="max-w-5xl">
@@ -203,6 +207,35 @@ export default async function PatientPage({ params, searchParams }: PageContext)
               ))
             )}
           </ul>
+        </section>
+      ) : null}
+      {canReadFollowUps ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold text-slate-950">Follow-ups</h2>
+          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+            {followUps.length === 0 ? (
+              <li className="p-6 text-sm text-slate-600">No follow-up history.</li>
+            ) : (
+              followUps.map((item) => (
+                <li
+                  className="flex flex-wrap items-start justify-between gap-3 px-4 py-3"
+                  key={item.id}
+                >
+                  <div>
+                    <Link
+                      className="font-medium text-teal-800 hover:underline"
+                      href={`/follow-ups/${item.id}`}
+                    >
+                      Due {item.dueDate}
+                    </Link>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{item.reason}</p>
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">{item.status}</span>
+                </li>
+              ))
+            )}
+          </ul>
+          {!archived ? <FollowUpCreateForm patientId={patient.id} /> : null}
         </section>
       ) : null}
     </section>

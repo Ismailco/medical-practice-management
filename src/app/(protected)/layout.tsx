@@ -29,6 +29,11 @@ export default async function ProtectedLayout({ children }: Readonly<{ children:
                 Consultations
               </Link>
             ) : null}
+            {hasCapability(currentSession.user.role, "followups.read_sensitive") ? (
+              <Link className="text-sm text-slate-600 hover:text-slate-950" href="/follow-ups">
+                Follow-ups
+              </Link>
+            ) : null}
             {hasCapability(currentSession.user.role, "users.manage_secretaries") ? (
               <Link className="text-sm text-slate-600 hover:text-slate-950" href="/settings/users">
                 Staff accounts

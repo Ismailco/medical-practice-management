@@ -15,6 +15,12 @@ describe("clinic timezone handling", () => {
     expect(clinicToday(instant, "Africa/Casablanca")).toBe("2026-09-10");
   });
 
+  it("derives clinic-local follow-up dates near UTC midnight", () => {
+    const instant = new Date("2026-09-09T23:30:00.000Z");
+    expect(clinicToday(instant, "Africa/Casablanca")).toBe("2026-09-10");
+    expect(clinicToday(instant, "America/New_York")).toBe("2026-09-09");
+  });
+
   it("rejects a nonexistent DST local time", () => {
     expect(() => localDateTimeToInstant("2026-03-08", "02:30", "America/New_York")).toThrow(
       /does not exist/,

@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 
 import { ClinicalAddendumForm } from "@/components/clinical-addendum-form";
 import { ConsultationEditor } from "@/components/consultation-editor";
+import { FollowUpCreateForm } from "@/components/follow-up-create-form";
 import { requirePageCapability } from "@/modules/auth/page";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import type { ClinicalRevisionDto } from "@/modules/consultations/dto";
 import { findConsultationDetail } from "@/modules/consultations/repository";
 import { consultationIdSchema } from "@/modules/consultations/validation";
+import { listConsultationFollowUps } from "@/modules/follow-ups/repository";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,6 +43,7 @@ export default async function ConsultationPage({ params }: Props) {
   if (!record) notFound();
   const current = record.revisions[0];
   const finalRevision = record.revisions.find((revision) => revision.final);
+  const followUps = await listConsultationFollowUps(record.id);
 
   return (
     <section className="max-w-5xl">
@@ -150,6 +153,29 @@ export default async function ConsultationPage({ params }: Props) {
           <ClinicalAddendumForm consultationId={record.id} />
         </section>
       ) : null}
+      <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+        <h2 className="text-xl font-semibold">Follow-ups</h2>
+        <ul className="mt-4 divide-y divide-slate-100">
+          {followUps.length === 0 ? (
+            <li className="py-3 text-sm text-slate-600">
+              No follow-ups linked to this consultation.
+            </li>
+          ) : (
+            followUps.map((item) => (
+              <li className="flex flex-wrap justify-between gap-3 py-3" key={item.id}>
+                <Link
+                  className="font-medium text-teal-800 hover:underline"
+                  href={`/follow-ups/${item.id}`}
+                >
+                  Due {item.dueDate}
+                </Link>
+                <span className="text-sm text-slate-600">{item.status}</span>
+              </li>
+            ))
+          )}
+        </ul>
+        <FollowUpCreateForm consultationId={record.id} />
+      </section>
     </section>
   );
 }

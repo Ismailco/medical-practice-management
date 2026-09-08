@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -44,6 +45,10 @@ export const auditAction = pgEnum("audit_action", [
   "CLINICAL_NOTE_REVISION_CREATED",
   "CONSULTATION_FINALIZED",
   "CLINICAL_ADDENDUM_CREATED",
+  "FOLLOW_UP_CREATED",
+  "FOLLOW_UP_UPDATED",
+  "FOLLOW_UP_COMPLETED",
+  "FOLLOW_UP_CANCELLED",
 ]);
 
 export const appointmentStatus = pgEnum("appointment_status", [
@@ -56,6 +61,7 @@ export const appointmentStatus = pgEnum("appointment_status", [
 ]);
 
 export const consultationStatus = pgEnum("consultation_status", ["IN_PROGRESS", "FINALIZED"]);
+export const followUpStatus = pgEnum("follow_up_status", ["PENDING", "COMPLETED", "CANCELLED"]);
 
 export const patientNumberSequence = pgSequence("patient_number_seq", {
   startWith: 1,
@@ -338,6 +344,7 @@ export const consultation = pgTable(
   },
   (table) => [
     uniqueIndex("consultation_appointment_unique").on(table.appointmentId),
+    uniqueIndex("consultation_patient_id_unique").on(table.patientId, table.id),
     index("consultation_patient_started_idx").on(table.patientId, table.startedAt),
     index("consultation_status_started_idx").on(table.status, table.startedAt),
     index("consultation_doctor_started_idx").on(table.doctorId, table.startedAt),
@@ -419,6 +426,48 @@ export const clinicalNoteAddendum = pgTable(
     check(
       "clinical_note_addendum_content_check",
       sql`length(btrim(${table.content})) BETWEEN 1 AND 20000`,
+    ),
+  ],
+);
+
+export const followUp = pgTable(
+  "follow_up",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "restrict" }),
+    consultationId: uuid("consultation_id"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    dueDate: date("due_date", { mode: "string" }).notNull(),
+    reason: text("reason").notNull(),
+    status: followUpStatus("status").default("PENDING").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    completedBy: uuid("completed_by").references(() => user.id, { onDelete: "restrict" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledBy: uuid("cancelled_by").references(() => user.id, { onDelete: "restrict" }),
+    ...timestamps,
+    version: integer("version").default(1).notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.patientId, table.consultationId],
+      foreignColumns: [consultation.patientId, consultation.id],
+      name: "follow_up_consultation_patient_fk",
+    }).onDelete("restrict"),
+    index("follow_up_status_due_date_idx").on(table.status, table.dueDate),
+    index("follow_up_patient_due_date_idx").on(table.patientId, table.dueDate),
+    index("follow_up_consultation_idx").on(table.consultationId),
+    check("follow_up_version_positive_check", sql`${table.version} >= 1`),
+    check(
+      "follow_up_reason_check",
+      sql`length(btrim(${table.reason})) BETWEEN 1 AND 2000 AND ${table.reason} = btrim(${table.reason})`,
+    ),
+    check(
+      "follow_up_lifecycle_metadata_check",
+      sql`(${table.status} = 'PENDING' AND ${table.completedAt} IS NULL AND ${table.completedBy} IS NULL AND ${table.cancelledAt} IS NULL AND ${table.cancelledBy} IS NULL) OR (${table.status} = 'COMPLETED' AND ${table.completedAt} IS NOT NULL AND ${table.completedBy} IS NOT NULL AND ${table.cancelledAt} IS NULL AND ${table.cancelledBy} IS NULL) OR (${table.status} = 'CANCELLED' AND ${table.completedAt} IS NULL AND ${table.completedBy} IS NULL AND ${table.cancelledAt} IS NOT NULL AND ${table.cancelledBy} IS NOT NULL)`,
     ),
   ],
 );

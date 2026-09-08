@@ -1,8 +1,8 @@
 # Data model
 
-## Phase 4 state
+## Phase 5 state
 
-The database contains authentication/security infrastructure, administrative patient and appointment records, and doctor-only consultation, clinical-note revision, and addendum records. No prescription, follow-up, medication, attachment, or billing structures exist.
+The database contains authentication/security infrastructure, administrative patient and appointment records, doctor-only consultation history, and doctor-only follow-up records. No prescription, medication, notification, attachment, or billing structures exist.
 
 The Better Auth tables own identities, password credentials, verification primitives, opaque database sessions, and its persistent rate limiter. Application services own staff policy, the failed-login pair throttle, and audit records. A partial unique index permits exactly one `DOCTOR`; the UI and API can create only `SECRETARY` users.
 
@@ -73,11 +73,19 @@ The migration does not fabricate consultations for pre-existing `IN_CONSULTATION
 
 ## Disclosure boundaries
 
-Patient and appointment administrative queries return explicit DTOs and never gain consultation existence or content. Doctor-authorized clinical queries use separate summary and detail DTOs. Consultation summaries omit clinical snippets; detail DTOs contain clinical content only after capability enforcement. Prescription contents and sensitive follow-up reasons must remain in separate future boundaries.
+Patient and appointment administrative queries return explicit DTOs and never gain consultation or follow-up existence or content. Doctor-authorized clinical queries use separate summary and detail DTOs. Consultation summaries omit clinical snippets; detail DTOs contain clinical content only after capability enforcement. Follow-up DTOs exist in a separate doctor-only boundary and are never returned by administrative repositories.
+
+## Follow-ups
+
+`follow_up` stores an active patient, optional consultation, creator, PostgreSQL `date` due date, bounded plain-text reason, lifecycle metadata, timestamps, and an optimistic version. `PENDING` is the only mutable state and can transition once to `COMPLETED` or `CANCELLED`; terminal rows cannot reopen, change, or be deleted. Database checks require status-specific actor/time pairs, and a trigger protects identity, terminal immutability, deletion, and version increments.
+
+Consultation-linked creation supports both in-progress and finalized consultations without mutating either. A composite foreign key from `(patient_id, consultation_id)` to the consultation ownership key makes cross-patient links invalid even outside application services. Direct creation locks the patient row; consultation-linked creation derives the patient before acquiring the same lock. Patient archival acquires that lock before checking pending follow-ups, making an archived patient with newly created pending work an impossible committed state.
+
+Due-today, overdue, and upcoming classification compares PostgreSQL `date` values with the current calendar date derived in `CLINIC_TIMEZONE`; no UTC timestamp conversion is applied to a follow-up date. Application-created records accept today or a future date. The database deliberately permits older dates for controlled imports. Operational sections are ordered by due date and bounded to 50 records each.
 
 ## Historical integrity
 
-Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Finalized prescriptions will receive equivalent history controls in their later phase. Issued prescription PDFs will be regenerated from an immutable issue snapshot and versioned renderer; PDF binaries are not stored in V1.
+Finalized consultations are protected through service rules, constraints, composite ownership, and triggers; clinical notes and addenda are append-only. Follow-ups preserve terminal history and expose no hard-delete operation. Finalized prescriptions will receive equivalent history controls in their later phase. Issued prescription PDFs will be regenerated from an immutable issue snapshot and versioned renderer; PDF binaries are not stored in V1.
 
 ## Retention
 

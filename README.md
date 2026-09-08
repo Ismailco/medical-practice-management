@@ -4,7 +4,7 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 4: Consultations and Secure Clinical Notes** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, append-only clinical-note revisions, finalization, and addenda. Follow-ups, prescriptions, and later clinical workflows are not implemented.
+**Phase 5: Follow-up Management** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, append-only clinical-note history, and date-oriented follow-up work. Prescriptions and later clinical workflows are not implemented.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -123,6 +123,12 @@ Doctors can start a direct consultation for an active patient or start one from 
 
 Clinical routes are doctor-only, use explicit clinical DTOs, and return private, no-store responses. Clinical values are excluded from application logs and audit metadata. Infrastructure-level encryption for storage and backups is required for a responsible production deployment; application field encryption is deliberately deferred until an external key-management design exists.
 
+## Follow-up management
+
+Doctors can create follow-ups for active patients or from either in-progress or finalized consultations. Consultation-linked creation derives the patient on the server. Follow-ups use clinic-local calendar dates and appear in bounded overdue, due-today, and upcoming sections; application creation rejects past dates while the database permits controlled historical imports.
+
+Pending follow-ups can be corrected with optimistic concurrency and then completed or cancelled exactly once. Terminal records cannot be edited, reopened, or deleted. A pending follow-up blocks patient archival; completed and cancelled history remains preserved without blocking archival. Follow-up reasons are doctor-only plain text, excluded from logs and audit metadata, and served with private/no-store caching. Notifications and reminders are intentionally not implemented.
+
 ## Project structure
 
 ```text
@@ -134,6 +140,7 @@ src/modules/users/  staff-account validation and services
 src/modules/patients/ administrative patient validation, DTOs, queries, services
 src/modules/appointments/ scheduling, timezone, lifecycle, DTOs, queries, services
 src/modules/consultations/ doctor-only clinical DTOs, validation, queries, services
+src/modules/follow-ups/ doctor-only follow-up lifecycle, DTOs, queries, services
 src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
@@ -141,7 +148,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Follow-up, prescription, medication, attachment, and billing modules do not exist. They will be added only in explicitly approved later phases.
+Prescription, medication, notification, attachment, and billing modules do not exist. They will be added only in explicitly approved later phases.
 
 ## Documentation
 

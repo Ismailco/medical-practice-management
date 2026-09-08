@@ -18,7 +18,7 @@ Security is a system property, not a production-readiness claim. The V1 reposito
 - Credentials use Argon2id. Defaults are 65,536 KiB memory, 3 iterations, and parallelism 1.
 - Session cookies are HttpOnly and SameSite=Lax, and are Secure when `APP_URL` is HTTPS.
 - All application-owned authentication, staff-account, and patient mutations require an exact trusted `Origin`.
-- All appointment and consultation reads require an authenticated session and capability; mutations and search operations require an exact trusted `Origin`.
+- All appointment, consultation, and follow-up reads require an authenticated session and capability; mutations and search operations require an exact trusted `Origin`.
 - Login throttles are PostgreSQL-backed and survive application restarts.
 
 Nonce-based CSP makes application rendering dynamic. This is an accepted trade-off for a future authenticated application containing sensitive information. New third-party origins require explicit review; do not weaken CSP globally to accommodate them.
@@ -49,11 +49,15 @@ Secretary and doctor appointment capabilities are explicit. Both manage ordinary
 
 Consultation and clinical-note capabilities are doctor-only. Authorization occurs before consultation lookup in transport adapters. Secretary navigation, patient pages, patient DTOs, and appointment DTOs contain no consultation count, identifier, state, diagnosis, note, or existence indicator. Strict dedicated operations are the only clinical mutation paths.
 
+Follow-up read, create, update, complete, and cancel capabilities are doctor-only. Authorization occurs before record lookup. Secretary navigation, dashboards, patient pages, administrative DTOs, and appointment responses contain no follow-up count, indicator, identifier, reason, or existence signal. Consultation-linked creation derives its patient server-side and is backed by a composite ownership foreign key.
+
 Clinical responses use `Cache-Control: private, no-store` and `Pragma: no-cache`; clinical pages also receive the route-level private/no-store policy. Clinical text is plain text rendered through React escaping, never `dangerouslySetInnerHTML`, and is never stored in browser storage. Only the current editor snapshot is sent to its Client Component; history remains server rendered.
+
+Follow-up APIs and pages use the same private/no-store policy. Dashboard and patient routes that may render doctor-only follow-up state are also explicitly private/no-store. Reasons are escaped plain text and are not placed in URLs, query strings, browser storage, shared caches, audit metadata, or application logs.
 
 ## Security audit events
 
-The `audit_log` records authentication outcomes, staff-account lifecycle actions, patient and appointment mutations, consultation creation, revision creation, finalization, and addendum creation. Clinical metadata is allow-listed to lifecycle state, resulting version, revision number, and whether a consultation is appointment-linked. It excludes all clinical text, patient identity, appointment times, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
+The `audit_log` records authentication outcomes, staff-account lifecycle actions, patient and appointment mutations, consultation creation, revision creation, finalization, addendum creation, and follow-up lifecycle changes. Clinical metadata is allow-listed to lifecycle state, resulting version, changed field names, and relationship booleans. It excludes clinical and follow-up text, patient identity, due dates, appointment times, full objects, and request bodies. A PostgreSQL trigger rejects application updates and deletes. Database owners can still alter records, so database access and external log export remain production responsibilities. No user-facing audit browser exists yet.
 
 ## Logging rules
 

@@ -47,10 +47,11 @@ These rules apply to all work in this repository.
 
 - Implement only the explicitly approved phase. Do not prepare product features from later phases.
 - Do not add Redis, Kafka, Kubernetes, Elasticsearch, GraphQL, microservices, or comparable infrastructure without an approved ADR.
-- Authentication, administrative patient records, appointment scheduling, and doctor-only consultations/clinical-note history are implemented. Follow-up and prescription functionality belongs to later approved phases.
+- Authentication, administrative patient records, appointment scheduling, doctor-only consultations/clinical-note history, and doctor-only follow-ups are implemented. Prescription functionality belongs to a later approved phase.
 - Keep the Patient module administrative-only. Do not add generic notes, metadata, or clinical fields to patient records.
 - Patient numbers are immutable; patient updates and lifecycle changes must preserve optimistic-concurrency checks.
 - Appointment schedule/status changes require optimistic concurrency and the centralized lifecycle policy. Never delete appointment history or silently bypass overlap confirmation.
 - Clinical mutations must use the dedicated start, revision, finalization, and addendum operations. Never mutate prior revisions/addenda or bypass linked appointment completion through a generic status update.
+- Follow-up mutations must use dedicated create, pending-update, complete, and cancel operations. Never reopen or delete terminal follow-ups.
 - Do not expose public registration, email recovery, or Better Auth's complete catch-all route without a new approved requirement and security review.
 - Create staff through application services: the operator CLI creates the single doctor and authorized doctors create secretaries. Never accept a role from secretary-creation input.

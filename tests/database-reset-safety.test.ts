@@ -43,15 +43,19 @@ describe("destructive integration-test database safety", () => {
     ).toThrow(/NODE_ENV must be exactly 'test'/);
   });
 
-  it.each(["clinic", "postgres", "production_test", "clinic_live_test", "arbitrary"])(
-    "rejects unsafe database name %s",
-    (databaseName) => {
-      expect(() =>
-        assertDestructiveTestDatabaseAllowed({
-          ...validEnvironment,
-          DATABASE_URL: `postgresql://test_user:test_password@127.0.0.1:5432/${databaseName}`,
-        }),
-      ).toThrow(/test-specific database/);
-    },
-  );
+  it.each([
+    "clinic",
+    "postgres",
+    "production_test",
+    "production2_test",
+    "clinic_live_test",
+    "arbitrary",
+  ])("rejects unsafe database name %s", (databaseName) => {
+    expect(() =>
+      assertDestructiveTestDatabaseAllowed({
+        ...validEnvironment,
+        DATABASE_URL: `postgresql://test_user:test_password@127.0.0.1:5432/${databaseName}`,
+      }),
+    ).toThrow(/test-specific database/);
+  });
 });

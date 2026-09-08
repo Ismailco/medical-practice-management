@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 4 provides authentication, staff administration, administrative patient records, appointment scheduling, and doctor-only consultations with immutable clinical-note history.
+The application is a modular monolith for one clinic, one doctor, and one or more secretaries. Phase 5 provides authentication, staff administration, administrative patient records, appointment scheduling, doctor-only consultations with immutable clinical-note history, and doctor-only follow-up management.
 
 The public project and demonstration use synthetic data only. Production readiness and regulatory compliance are explicitly outside the V1 demonstration claim.
 
@@ -66,6 +66,12 @@ The consultation module owns doctor-only clinical validation, explicit clinical 
 Starting from an appointment atomically creates the consultation and moves an arrived appointment to `IN_CONSULTATION`. Finalization freezes the current revision and completes the linked appointment in the same transaction. Direct consultations omit the appointment. Patient-row locking coordinates all starts with patient archival.
 
 Clinical pages are dynamically rendered with private, no-store cache policy. Server Components render history and finalized content as escaped plain text; only the active editor fields cross into a Client Component. No browser persistence or rich-text/HTML rendering is used.
+
+## Follow-up boundary
+
+The follow-up module owns doctor-only sensitive reasons, clinic-local due-date classification, explicit DTOs, pending-record corrections, and terminal completion/cancellation. A consultation link is optional and does not mutate consultation content; linked creation derives the patient from the consultation, while a composite database foreign key prevents cross-patient links.
+
+Patient-row locking coordinates creation with archival. Pending work blocks archival, while completed and cancelled history remains immutable and does not. Dashboard, patient, consultation, API, and navigation integrations authorize follow-up capabilities before loading follow-up DTOs. No reminder, messaging, calendar, or notification infrastructure exists.
 
 ## Health model
 

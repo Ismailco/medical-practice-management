@@ -4,7 +4,8 @@ type DestructiveTestDatabaseEnvironment = Readonly<{
   DATABASE_URL?: string | undefined;
 }>;
 
-const unsafeDatabaseNamePattern = /(?:^|[_-])(prod(?:uction)?|live|staging|demo)(?:[_-]|$)/i;
+const unsafeDatabaseNamePattern =
+  /(?:^|[_-])(?:prod(?:uction)?[a-z0-9]*|live[a-z0-9]*|staging[a-z0-9]*|demo[a-z0-9]*)(?:[_-]|$)/i;
 const testDatabaseNamePattern = /^[a-z][a-z0-9_-]*_test$/i;
 
 function readDatabaseName(databaseUrl: string | undefined): string | null {

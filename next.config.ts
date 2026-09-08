@@ -15,6 +15,11 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
+const privateNoStoreHeaders = [
+  { key: "Cache-Control", value: "private, no-store" },
+  { key: "Pragma", value: "no-cache" },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -23,17 +28,31 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/consultations/:path*",
-        headers: [
-          { key: "Cache-Control", value: "private, no-store" },
-          { key: "Pragma", value: "no-cache" },
-        ],
+        headers: privateNoStoreHeaders,
       },
       {
         source: "/api/consultations/:path*",
-        headers: [
-          { key: "Cache-Control", value: "private, no-store" },
-          { key: "Pragma", value: "no-cache" },
-        ],
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/follow-ups",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/follow-ups/:path*",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/api/follow-ups/:path*",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/dashboard",
+        headers: privateNoStoreHeaders,
+      },
+      {
+        source: "/patients/:path*",
+        headers: privateNoStoreHeaders,
       },
       {
         source: "/:path*",

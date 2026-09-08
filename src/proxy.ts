@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export function requiresPrivateNoStore(pathname: string): boolean {
+  return (
+    pathname === "/dashboard" ||
+    pathname === "/patients" ||
+    pathname.startsWith("/patients/") ||
+    pathname === "/consultations" ||
+    pathname.startsWith("/consultations/") ||
+    pathname === "/follow-ups" ||
+    pathname.startsWith("/follow-ups/") ||
+    pathname === "/api/consultations" ||
+    pathname.startsWith("/api/consultations/") ||
+    pathname === "/api/follow-ups" ||
+    pathname.startsWith("/api/follow-ups/")
+  );
+}
+
 export function proxy(request: NextRequest): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -31,6 +47,10 @@ export function proxy(request: NextRequest): NextResponse {
   });
 
   response.headers.set("Content-Security-Policy", contentSecurityPolicy);
+  if (requiresPrivateNoStore(request.nextUrl.pathname)) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("Pragma", "no-cache");
+  }
   return response;
 }
 

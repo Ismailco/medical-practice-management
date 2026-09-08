@@ -2,14 +2,23 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/modules/auth/session";
+import { hasCapability } from "@/modules/auth/capabilities";
 import { appointmentDashboardSummary } from "@/modules/appointments/repository";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
+import { followUpDashboardSummary } from "@/modules/follow-ups/repository";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function DashboardPage() {
   const currentSession = await getCurrentSession();
   if (!currentSession) redirect("/login");
   const currentUser = currentSession.user;
-  const summary = await appointmentDashboardSummary();
+  const canReadFollowUps = hasCapability(currentUser.role, "followups.read_sensitive");
+  const [summary, followUps] = await Promise.all([
+    appointmentDashboardSummary(),
+    canReadFollowUps ? followUpDashboardSummary() : Promise.resolve(null),
+  ]);
 
   return (
     <section className="max-w-3xl">
@@ -54,6 +63,27 @@ export default async function DashboardPage() {
       >
         Open daily agenda →
       </Link>
+      {followUps ? (
+        <section className="mt-10 border-t border-slate-200 pt-8">
+          <h2 className="text-xl font-semibold text-slate-950">Follow-ups</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="text-sm text-red-800">Overdue</div>
+              <div className="mt-1 text-2xl font-semibold text-red-950">{followUps.overdue}</div>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <div className="text-sm text-slate-500">Due today</div>
+              <div className="mt-1 text-2xl font-semibold">{followUps.dueToday}</div>
+            </div>
+          </div>
+          <Link
+            className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:underline"
+            href="/follow-ups"
+          >
+            Open follow-ups →
+          </Link>
+        </section>
+      ) : null}
     </section>
   );
 }
