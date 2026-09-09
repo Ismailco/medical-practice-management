@@ -27,8 +27,18 @@ export function PracticeProfileForm({ initial }: Readonly<{ initial: Profile }>)
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        clinic: { ...profile.clinic, expectedVersion: profile.clinic.version || null },
-        doctor: { ...profile.doctor, expectedVersion: profile.doctor.version || null },
+        clinic: {
+          name: profile.clinic.name,
+          address: profile.clinic.address,
+          phone: profile.clinic.phone,
+          expectedVersion: profile.clinic.version || null,
+        },
+        doctor: {
+          displayName: profile.doctor.displayName,
+          specialty: profile.doctor.specialty,
+          professionalIdentifier: profile.doctor.professionalIdentifier,
+          expectedVersion: profile.doctor.version || null,
+        },
       }),
     });
     const result = (await response.json()) as {
