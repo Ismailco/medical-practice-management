@@ -1,6 +1,6 @@
 # Clinic Management
 
-Clinic Management is an open-source foundation for a small medical practice-management application. The intended product will support administrative and clinical workflows for one clinic, one doctor, and secretaries with limited permissions.
+Clinic Management is an open-source practice management application for small medical clinics and cabinets. It covers administrative patient records, appointments, doctor-only consultations and clinical note history, follow-ups, prescriptions, printable prescription PDFs, and separate doctor/secretary authorization.
 
 ## Development status
 
@@ -10,8 +10,15 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 This project is not production-ready healthcare software. A real deployment requires an independent security review and all applicable legal and compliance reviews. The project does not claim automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or any other framework.
 
-Screenshots are intentionally not committed in the beta repository; run the synthetic demo seed locally
-to explore the workflows without exposing private data.
+## Screenshots
+
+All screenshots use synthetic demo data. The complete set is in [`docs/assets/screenshots/`](docs/assets/screenshots/).
+
+![Doctor dashboard](docs/assets/screenshots/dashboard-doctor.png)
+![Daily appointments](docs/assets/screenshots/appointments.png)
+![Consultations](docs/assets/screenshots/consultation.png)
+![Finalized prescription](docs/assets/screenshots/prescription-finalized-detail.png)
+![Prescription PDF](docs/assets/screenshots/prescription-pdf.png)
 
 ## Technology
 
@@ -24,6 +31,17 @@ to explore the workflows without exposing private data.
 - Vitest
 - pnpm
 - Better Auth database sessions with explicit Argon2id password hashing
+- PDFKit for server-generated A4 prescription documents
+- Docker Compose for local PostgreSQL
+
+## Engineering highlights
+
+- Server-side capability authorization and database-backed sessions.
+- Immutable clinical note revisions and finalized prescription history with issue snapshots.
+- Optimistic concurrency for edits and lifecycle transitions, including transactional prescription numbering.
+- Append-only audit events with sensitive clinical values excluded from metadata and logs.
+- Private, no-store responses for clinical and prescription content.
+- Synthetic demo mode and a hard guard around destructive integration-test database operations.
 
 ## Requirements
 
