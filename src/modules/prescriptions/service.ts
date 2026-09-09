@@ -18,7 +18,7 @@ import { clinicToday } from "@/modules/appointments/timezone";
 import { ConflictError, NotFoundError } from "@/modules/auth/errors";
 import type { SafeUser } from "@/modules/auth/session";
 import { findIssuedPrescriptionDocumentData, findPrescriptionDetail } from "./repository";
-import { renderPrescription } from "./pdf";
+import { PRESCRIPTION_TEMPLATE_V3, renderPrescription } from "./pdf";
 import {
   practiceProfileInputSchema,
   prescriptionCreationInputSchema,
@@ -378,12 +378,22 @@ export async function finalizePrescription(
       patientName: `${patientRecord.firstName} ${patientRecord.lastName}`,
       patientDateOfBirth: patientRecord.dateOfBirth,
       doctorName: doctor.displayName,
+      doctorNameArabic: doctor.displayNameArabic,
       doctorSpecialty: doctor.specialty,
+      doctorSpecialtyArabic: doctor.specialtyArabic,
       doctorProfessionalIdentifier: doctor.professionalIdentifier,
+      doctorSocialMedia: doctor.socialMedia,
       clinicName: clinic.name,
+      clinicNameArabic: clinic.nameArabic,
       clinicAddress: clinic.address,
+      clinicAddressArabic: clinic.addressArabic,
+      clinicCity: clinic.city,
+      clinicCityArabic: clinic.cityArabic,
       clinicPhone: clinic.phone,
-      templateVersion: "phase6-v1",
+      clinicPhoneSecondary: clinic.phoneSecondary,
+      clinicEmail: clinic.email,
+      clinicLogoDataUrl: clinic.logoDataUrl,
+      templateVersion: PRESCRIPTION_TEMPLATE_V3,
     });
     await transaction.insert(auditLog).values({
       actorUserId: actor.id,
@@ -618,8 +628,15 @@ export async function savePracticeProfile(input: unknown, actor: SafeUser) {
             .update(clinicProfile)
             .set({
               name: parsed.clinic.name,
+              nameArabic: parsed.clinic.nameArabic ?? null,
               address: parsed.clinic.address ?? null,
+              addressArabic: parsed.clinic.addressArabic ?? null,
+              city: parsed.clinic.city ?? null,
+              cityArabic: parsed.clinic.cityArabic ?? null,
               phone: parsed.clinic.phone ?? null,
+              phoneSecondary: parsed.clinic.phoneSecondary ?? null,
+              email: parsed.clinic.email ?? null,
+              logoDataUrl: parsed.clinic.logoDataUrl ?? null,
               version: sql`${clinicProfile.version} + 1`,
               updatedAt: new Date(),
             })
@@ -637,8 +654,15 @@ export async function savePracticeProfile(input: unknown, actor: SafeUser) {
             .values({
               id: 1,
               name: parsed.clinic.name,
+              nameArabic: parsed.clinic.nameArabic ?? null,
               address: parsed.clinic.address ?? null,
+              addressArabic: parsed.clinic.addressArabic ?? null,
+              city: parsed.clinic.city ?? null,
+              cityArabic: parsed.clinic.cityArabic ?? null,
               phone: parsed.clinic.phone ?? null,
+              phoneSecondary: parsed.clinic.phoneSecondary ?? null,
+              email: parsed.clinic.email ?? null,
+              logoDataUrl: parsed.clinic.logoDataUrl ?? null,
             })
             .returning()
         )[0];
@@ -648,8 +672,11 @@ export async function savePracticeProfile(input: unknown, actor: SafeUser) {
             .update(doctorProfessionalProfile)
             .set({
               displayName: parsed.doctor.displayName,
+              displayNameArabic: parsed.doctor.displayNameArabic ?? null,
               specialty: parsed.doctor.specialty ?? null,
+              specialtyArabic: parsed.doctor.specialtyArabic ?? null,
               professionalIdentifier: parsed.doctor.professionalIdentifier ?? null,
+              socialMedia: parsed.doctor.socialMedia ?? null,
               version: sql`${doctorProfessionalProfile.version} + 1`,
               updatedAt: new Date(),
             })
@@ -667,8 +694,11 @@ export async function savePracticeProfile(input: unknown, actor: SafeUser) {
             .values({
               userId: actor.id,
               displayName: parsed.doctor.displayName,
+              displayNameArabic: parsed.doctor.displayNameArabic ?? null,
               specialty: parsed.doctor.specialty ?? null,
+              specialtyArabic: parsed.doctor.specialtyArabic ?? null,
               professionalIdentifier: parsed.doctor.professionalIdentifier ?? null,
+              socialMedia: parsed.doctor.socialMedia ?? null,
             })
             .returning()
         )[0];
@@ -689,15 +719,25 @@ export async function savePracticeProfile(input: unknown, actor: SafeUser) {
       clinic: {
         id: clinic.id,
         name: clinic.name,
+        nameArabic: clinic.nameArabic,
         address: clinic.address,
+        addressArabic: clinic.addressArabic,
+        city: clinic.city,
+        cityArabic: clinic.cityArabic,
         phone: clinic.phone,
+        phoneSecondary: clinic.phoneSecondary,
+        email: clinic.email,
+        logoDataUrl: clinic.logoDataUrl,
         version: clinic.version,
       },
       doctor: {
         userId: doctor.userId,
         displayName: doctor.displayName,
+        displayNameArabic: doctor.displayNameArabic,
         specialty: doctor.specialty,
+        specialtyArabic: doctor.specialtyArabic,
         professionalIdentifier: doctor.professionalIdentifier,
+        socialMedia: doctor.socialMedia,
         version: doctor.version,
       },
     } as const;

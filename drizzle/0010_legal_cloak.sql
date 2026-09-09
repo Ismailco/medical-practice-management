@@ -1,0 +1,4 @@
+ALTER TABLE "doctor_professional_profile" ADD COLUMN "social_media" text;--> statement-breakpoint
+ALTER TABLE "prescription_issue_snapshot" ADD COLUMN "doctor_social_media" text;--> statement-breakpoint
+ALTER TABLE "doctor_professional_profile" ADD CONSTRAINT "doctor_profile_social_media_check" CHECK ("doctor_professional_profile"."social_media" IS NULL OR length("doctor_professional_profile"."social_media") <= 500);--> statement-breakpoint
+ALTER TABLE "prescription_issue_snapshot" ADD CONSTRAINT "prescription_snapshot_doctor_social_media_check" CHECK ("prescription_issue_snapshot"."doctor_social_media" IS NULL OR length("prescription_issue_snapshot"."doctor_social_media") <= 500);

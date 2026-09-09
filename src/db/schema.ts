@@ -492,8 +492,15 @@ export const clinicProfile = pgTable(
   {
     id: integer("id").primaryKey().default(1),
     name: text("name").notNull(),
+    nameArabic: text("name_arabic"),
     address: text("address"),
+    addressArabic: text("address_arabic"),
+    city: text("city"),
+    cityArabic: text("city_arabic"),
     phone: text("phone"),
+    phoneSecondary: text("phone_secondary"),
+    email: text("email"),
+    logoDataUrl: text("logo_data_url"),
     version: integer("version").default(1).notNull(),
     ...timestamps,
   },
@@ -501,12 +508,37 @@ export const clinicProfile = pgTable(
     check("clinic_profile_singleton_check", sql`${table.id} = 1`),
     check("clinic_profile_name_check", sql`length(btrim(${table.name})) BETWEEN 1 AND 200`),
     check(
+      "clinic_profile_name_arabic_check",
+      sql`${table.nameArabic} IS NULL OR length(${table.nameArabic}) <= 200`,
+    ),
+    check(
       "clinic_profile_address_check",
       sql`${table.address} IS NULL OR length(${table.address}) <= 500`,
     ),
     check(
+      "clinic_profile_address_arabic_check",
+      sql`${table.addressArabic} IS NULL OR length(${table.addressArabic}) <= 500`,
+    ),
+    check("clinic_profile_city_check", sql`${table.city} IS NULL OR length(${table.city}) <= 100`),
+    check(
+      "clinic_profile_city_arabic_check",
+      sql`${table.cityArabic} IS NULL OR length(${table.cityArabic}) <= 100`,
+    ),
+    check(
       "clinic_profile_phone_check",
       sql`${table.phone} IS NULL OR length(${table.phone}) <= 50`,
+    ),
+    check(
+      "clinic_profile_phone_secondary_check",
+      sql`${table.phoneSecondary} IS NULL OR length(${table.phoneSecondary}) <= 50`,
+    ),
+    check(
+      "clinic_profile_email_check",
+      sql`${table.email} IS NULL OR length(${table.email}) <= 254`,
+    ),
+    check(
+      "clinic_profile_logo_data_url_check",
+      sql`${table.logoDataUrl} IS NULL OR length(${table.logoDataUrl}) <= 1500000`,
     ),
     check("clinic_profile_version_positive_check", sql`${table.version} >= 1`),
   ],
@@ -519,8 +551,11 @@ export const doctorProfessionalProfile = pgTable(
       .primaryKey()
       .references(() => user.id, { onDelete: "restrict" }),
     displayName: text("display_name").notNull(),
+    displayNameArabic: text("display_name_arabic"),
     specialty: text("specialty"),
+    specialtyArabic: text("specialty_arabic"),
     professionalIdentifier: text("professional_identifier"),
+    socialMedia: text("social_media"),
     version: integer("version").default(1).notNull(),
     ...timestamps,
   },
@@ -530,12 +565,24 @@ export const doctorProfessionalProfile = pgTable(
       sql`length(btrim(${table.displayName})) BETWEEN 1 AND 200`,
     ),
     check(
+      "doctor_profile_display_name_arabic_check",
+      sql`${table.displayNameArabic} IS NULL OR length(${table.displayNameArabic}) <= 200`,
+    ),
+    check(
       "doctor_profile_specialty_check",
       sql`${table.specialty} IS NULL OR length(${table.specialty}) <= 200`,
     ),
     check(
+      "doctor_profile_specialty_arabic_check",
+      sql`${table.specialtyArabic} IS NULL OR length(${table.specialtyArabic}) <= 200`,
+    ),
+    check(
       "doctor_profile_identifier_check",
       sql`${table.professionalIdentifier} IS NULL OR length(${table.professionalIdentifier}) <= 200`,
+    ),
+    check(
+      "doctor_profile_social_media_check",
+      sql`${table.socialMedia} IS NULL OR length(${table.socialMedia}) <= 500`,
     ),
     check("doctor_profile_version_positive_check", sql`${table.version} >= 1`),
   ],
@@ -668,11 +715,21 @@ export const prescriptionIssueSnapshot = pgTable(
     patientName: text("patient_name").notNull(),
     patientDateOfBirth: date("patient_date_of_birth", { mode: "string" }).notNull(),
     doctorName: text("doctor_name").notNull(),
+    doctorNameArabic: text("doctor_name_arabic"),
     doctorSpecialty: text("doctor_specialty"),
+    doctorSpecialtyArabic: text("doctor_specialty_arabic"),
     doctorProfessionalIdentifier: text("doctor_professional_identifier"),
+    doctorSocialMedia: text("doctor_social_media"),
     clinicName: text("clinic_name").notNull(),
+    clinicNameArabic: text("clinic_name_arabic"),
     clinicAddress: text("clinic_address"),
+    clinicAddressArabic: text("clinic_address_arabic"),
+    clinicCity: text("clinic_city"),
+    clinicCityArabic: text("clinic_city_arabic"),
     clinicPhone: text("clinic_phone"),
+    clinicPhoneSecondary: text("clinic_phone_secondary"),
+    clinicEmail: text("clinic_email"),
+    clinicLogoDataUrl: text("clinic_logo_data_url"),
     templateVersion: text("template_version").notNull().default("phase6-v1"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -683,7 +740,39 @@ export const prescriptionIssueSnapshot = pgTable(
     ),
     check("prescription_snapshot_patient_name_check", sql`length(btrim(${table.patientName})) > 0`),
     check("prescription_snapshot_doctor_name_check", sql`length(btrim(${table.doctorName})) > 0`),
+    check(
+      "prescription_snapshot_doctor_name_arabic_check",
+      sql`${table.doctorNameArabic} IS NULL OR length(${table.doctorNameArabic}) <= 200`,
+    ),
+    check(
+      "prescription_snapshot_doctor_specialty_arabic_check",
+      sql`${table.doctorSpecialtyArabic} IS NULL OR length(${table.doctorSpecialtyArabic}) <= 200`,
+    ),
+    check(
+      "prescription_snapshot_doctor_social_media_check",
+      sql`${table.doctorSocialMedia} IS NULL OR length(${table.doctorSocialMedia}) <= 500`,
+    ),
     check("prescription_snapshot_clinic_name_check", sql`length(btrim(${table.clinicName})) > 0`),
+    check(
+      "prescription_snapshot_clinic_name_arabic_check",
+      sql`${table.clinicNameArabic} IS NULL OR length(${table.clinicNameArabic}) <= 200`,
+    ),
+    check(
+      "prescription_snapshot_clinic_address_arabic_check",
+      sql`${table.clinicAddressArabic} IS NULL OR length(${table.clinicAddressArabic}) <= 500`,
+    ),
+    check(
+      "prescription_snapshot_clinic_city_check",
+      sql`${table.clinicCity} IS NULL OR length(${table.clinicCity}) <= 100`,
+    ),
+    check(
+      "prescription_snapshot_clinic_city_arabic_check",
+      sql`${table.clinicCityArabic} IS NULL OR length(${table.clinicCityArabic}) <= 100`,
+    ),
+    check(
+      "prescription_snapshot_clinic_logo_check",
+      sql`${table.clinicLogoDataUrl} IS NULL OR length(${table.clinicLogoDataUrl}) <= 1500000`,
+    ),
   ],
 );
 

@@ -33,11 +33,21 @@ export type PrescriptionSnapshotDto = Readonly<{
   patientName: string;
   patientDateOfBirth: string;
   doctorName: string;
+  doctorNameArabic: string | null;
   doctorSpecialty: string | null;
+  doctorSpecialtyArabic: string | null;
   doctorProfessionalIdentifier: string | null;
+  doctorSocialMedia: string | null;
   clinicName: string;
+  clinicNameArabic: string | null;
   clinicAddress: string | null;
+  clinicAddressArabic: string | null;
+  clinicCity: string | null;
+  clinicCityArabic: string | null;
   clinicPhone: string | null;
+  clinicPhoneSecondary: string | null;
+  clinicEmail: string | null;
+  clinicLogoDataUrl: string | null;
   templateVersion: string;
 }>;
 
@@ -58,15 +68,25 @@ export type PracticeProfileDto = Readonly<{
   clinic: Readonly<{
     id: number;
     name: string;
+    nameArabic: string | null;
     address: string | null;
+    addressArabic: string | null;
+    city: string | null;
+    cityArabic: string | null;
     phone: string | null;
+    phoneSecondary: string | null;
+    email: string | null;
+    logoDataUrl: string | null;
     version: number;
   }>;
   doctor: Readonly<{
     userId: string;
     displayName: string;
+    displayNameArabic: string | null;
     specialty: string | null;
+    specialtyArabic: string | null;
     professionalIdentifier: string | null;
+    socialMedia: string | null;
     version: number;
   }>;
 }>;

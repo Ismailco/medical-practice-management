@@ -64,6 +64,20 @@
       "when": 1788902310678,
       "tag": "0008_huge_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788947568064,
+      "tag": "0009_dry_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788949873507,
+      "tag": "0010_legal_cloak",
+      "breakpoints": true
     }
   ]
 }

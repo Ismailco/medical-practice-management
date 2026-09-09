@@ -8,6 +8,21 @@ const optionalText = (maximum: number) =>
     z.string().trim().max(maximum).nullable().optional(),
   );
 
+const optionalEmail = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z.string().trim().email().max(254).nullable().optional(),
+);
+
+const optionalLogoDataUrl = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z
+    .string()
+    .max(1_500_000)
+    .regex(/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/)
+    .nullable()
+    .optional(),
+);
+
 const itemShape = {
   medicationName: z.string().trim().min(1).max(200),
   dosage: optionalText(200),
@@ -49,16 +64,26 @@ export const practiceProfileInputSchema = z
     clinic: z
       .object({
         name: z.string().trim().min(1).max(200),
+        nameArabic: optionalText(200),
         address: optionalText(500),
+        addressArabic: optionalText(500),
+        city: optionalText(100),
+        cityArabic: optionalText(100),
         phone: optionalText(50),
+        phoneSecondary: optionalText(50),
+        email: optionalEmail,
+        logoDataUrl: optionalLogoDataUrl,
         expectedVersion: z.number().int().min(1).max(2_147_483_647).nullable(),
       })
       .strict(),
     doctor: z
       .object({
         displayName: z.string().trim().min(1).max(200),
+        displayNameArabic: optionalText(200),
         specialty: optionalText(200),
+        specialtyArabic: optionalText(200),
         professionalIdentifier: optionalText(200),
+        socialMedia: optionalText(500),
         expectedVersion: z.number().int().min(1).max(2_147_483_647).nullable(),
       })
       .strict(),
