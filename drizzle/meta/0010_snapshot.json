@@ -139,12 +139,8 @@
           "name": "auth_account_user_id_auth_user_id_fk",
           "tableFrom": "auth_account",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -307,12 +303,8 @@
           "name": "appointment_patient_id_patient_id_fk",
           "tableFrom": "appointment",
           "tableTo": "patient",
-          "columnsFrom": [
-            "patient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -320,12 +312,8 @@
           "name": "appointment_created_by_auth_user_id_fk",
           "tableFrom": "appointment",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -333,12 +321,8 @@
           "name": "appointment_cancelled_by_auth_user_id_fk",
           "tableFrom": "appointment",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "cancelled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cancelled_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -486,12 +470,8 @@
           "name": "audit_log_actor_user_id_auth_user_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "actor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -726,12 +706,8 @@
           "name": "clinical_note_addendum_consultation_id_consultation_id_fk",
           "tableFrom": "clinical_note_addendum",
           "tableTo": "consultation",
-          "columnsFrom": [
-            "consultation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["consultation_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -739,12 +715,8 @@
           "name": "clinical_note_addendum_created_by_auth_user_id_fk",
           "tableFrom": "clinical_note_addendum",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -891,12 +863,8 @@
           "name": "clinical_note_revision_consultation_id_consultation_id_fk",
           "tableFrom": "clinical_note_revision",
           "tableTo": "consultation",
-          "columnsFrom": [
-            "consultation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["consultation_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -904,12 +872,8 @@
           "name": "clinical_note_revision_created_by_auth_user_id_fk",
           "tableFrom": "clinical_note_revision",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1136,12 +1100,8 @@
           "name": "consultation_patient_id_patient_id_fk",
           "tableFrom": "consultation",
           "tableTo": "patient",
-          "columnsFrom": [
-            "patient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1149,12 +1109,8 @@
           "name": "consultation_appointment_id_appointment_id_fk",
           "tableFrom": "consultation",
           "tableTo": "appointment",
-          "columnsFrom": [
-            "appointment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["appointment_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1162,12 +1118,8 @@
           "name": "consultation_doctor_id_auth_user_id_fk",
           "tableFrom": "consultation",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "doctor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1265,12 +1217,8 @@
           "name": "doctor_professional_profile_user_id_auth_user_id_fk",
           "tableFrom": "doctor_professional_profile",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1469,12 +1417,8 @@
           "name": "follow_up_patient_id_patient_id_fk",
           "tableFrom": "follow_up",
           "tableTo": "patient",
-          "columnsFrom": [
-            "patient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1482,12 +1426,8 @@
           "name": "follow_up_created_by_auth_user_id_fk",
           "tableFrom": "follow_up",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1495,12 +1435,8 @@
           "name": "follow_up_completed_by_auth_user_id_fk",
           "tableFrom": "follow_up",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "completed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["completed_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1508,12 +1444,8 @@
           "name": "follow_up_cancelled_by_auth_user_id_fk",
           "tableFrom": "follow_up",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "cancelled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cancelled_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1521,14 +1453,8 @@
           "name": "follow_up_consultation_patient_fk",
           "tableFrom": "follow_up",
           "tableTo": "consultation",
-          "columnsFrom": [
-            "patient_id",
-            "consultation_id"
-          ],
-          "columnsTo": [
-            "patient_id",
-            "id"
-          ],
+          "columnsFrom": ["patient_id", "consultation_id"],
+          "columnsTo": ["patient_id", "id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1839,12 +1765,8 @@
           "name": "patient_archived_by_auth_user_id_fk",
           "tableFrom": "patient",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "archived_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["archived_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2134,12 +2056,8 @@
           "name": "prescription_patient_id_patient_id_fk",
           "tableFrom": "prescription",
           "tableTo": "patient",
-          "columnsFrom": [
-            "patient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2147,12 +2065,8 @@
           "name": "prescription_doctor_id_auth_user_id_fk",
           "tableFrom": "prescription",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "doctor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2160,12 +2074,8 @@
           "name": "prescription_voided_by_auth_user_id_fk",
           "tableFrom": "prescription",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "voided_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["voided_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2173,14 +2083,8 @@
           "name": "prescription_consultation_patient_fk",
           "tableFrom": "prescription",
           "tableTo": "consultation",
-          "columnsFrom": [
-            "patient_id",
-            "consultation_id"
-          ],
-          "columnsTo": [
-            "patient_id",
-            "id"
-          ],
+          "columnsFrom": ["patient_id", "consultation_id"],
+          "columnsTo": ["patient_id", "id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2188,14 +2092,8 @@
           "name": "prescription_replacement_patient_fk",
           "tableFrom": "prescription",
           "tableTo": "prescription",
-          "columnsFrom": [
-            "patient_id",
-            "replaces_prescription_id"
-          ],
-          "columnsTo": [
-            "patient_id",
-            "id"
-          ],
+          "columnsFrom": ["patient_id", "replaces_prescription_id"],
+          "columnsTo": ["patient_id", "id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2203,12 +2101,8 @@
           "name": "prescription_replaces_prescription_id_prescription_id_fk",
           "tableFrom": "prescription",
           "tableTo": "prescription",
-          "columnsFrom": [
-            "replaces_prescription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["replaces_prescription_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2402,12 +2296,8 @@
           "name": "prescription_issue_snapshot_prescription_id_prescription_id_fk",
           "tableFrom": "prescription_issue_snapshot",
           "tableTo": "prescription",
-          "columnsFrom": [
-            "prescription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["prescription_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2602,12 +2492,8 @@
           "name": "prescription_item_prescription_id_prescription_id_fk",
           "tableFrom": "prescription_item",
           "tableTo": "prescription",
-          "columnsFrom": [
-            "prescription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["prescription_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2837,12 +2723,8 @@
           "name": "auth_session_user_id_auth_user_id_fk",
           "tableFrom": "auth_session",
           "tableTo": "auth_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3072,14 +2954,7 @@
     "public.appointment_status": {
       "name": "appointment_status",
       "schema": "public",
-      "values": [
-        "SCHEDULED",
-        "ARRIVED",
-        "IN_CONSULTATION",
-        "COMPLETED",
-        "CANCELLED",
-        "NO_SHOW"
-      ]
+      "values": ["SCHEDULED", "ARRIVED", "IN_CONSULTATION", "COMPLETED", "CANCELLED", "NO_SHOW"]
     },
     "public.audit_action": {
       "name": "audit_action",
@@ -3124,36 +2999,22 @@
     "public.consultation_status": {
       "name": "consultation_status",
       "schema": "public",
-      "values": [
-        "IN_PROGRESS",
-        "FINALIZED"
-      ]
+      "values": ["IN_PROGRESS", "FINALIZED"]
     },
     "public.follow_up_status": {
       "name": "follow_up_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "COMPLETED",
-        "CANCELLED"
-      ]
+      "values": ["PENDING", "COMPLETED", "CANCELLED"]
     },
     "public.prescription_status": {
       "name": "prescription_status",
       "schema": "public",
-      "values": [
-        "DRAFT",
-        "FINALIZED",
-        "VOID"
-      ]
+      "values": ["DRAFT", "FINALIZED", "VOID"]
     },
     "public.staff_role": {
       "name": "staff_role",
       "schema": "public",
-      "values": [
-        "DOCTOR",
-        "SECRETARY"
-      ]
+      "values": ["DOCTOR", "SECRETARY"]
     }
   },
   "schemas": {},
