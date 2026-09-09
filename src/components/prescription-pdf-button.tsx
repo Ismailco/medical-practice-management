@@ -12,7 +12,13 @@ export function PrescriptionPdfButton({
   async function openPdf() {
     setBusy(true);
     setError(null);
-    const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      setError("Allow pop-ups to view the prescription PDF.");
+      setBusy(false);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/prescriptions/${prescriptionId}/pdf`, {
         method: "POST",
@@ -21,19 +27,17 @@ export function PrescriptionPdfButton({
         body: "{}",
       });
       if (!response.ok) {
-        popup?.close();
+        popup.close();
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error ?? "The prescription PDF could not be generated.");
       }
-      const url = URL.createObjectURL(await response.blob());
-      if (popup) {
-        popup.location.href = url;
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      } else {
-        URL.revokeObjectURL(url);
-        throw new Error("Allow pop-ups to view the prescription PDF.");
-      }
+      const pdfBlob = new Blob([await response.arrayBuffer()], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+      popup.location.href = url;
+      popup.opener = null;
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (cause) {
+      popup.close();
       setError(
         cause instanceof Error ? cause.message : "The prescription PDF could not be generated.",
       );
