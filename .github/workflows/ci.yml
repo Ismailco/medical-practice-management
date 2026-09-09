@@ -27,9 +27,13 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      NODE_ENV: test
       APP_URL: http://localhost:3000
       DATABASE_URL: postgresql://clinic_test:clinic_test@localhost:5432/clinic_test
       BETTER_AUTH_SECRET: ci-only-synthetic-secret-never-use-in-production
+      ALLOW_TEST_DATABASE_RESET: true
+      ALLOW_DEMO_SEED: false
+      ALLOW_DEMO_RESET: false
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -59,6 +63,9 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Secret scan
+        run: pnpm security:scan
 
       - name: Validate migration history
         run: pnpm db:check

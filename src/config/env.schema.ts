@@ -43,6 +43,9 @@ const environmentSchema = z
         return false;
       }
     }, "CLINIC_TIMEZONE must be a valid IANA timezone"),
+    ALLOW_TEST_DATABASE_RESET: z.enum(["true", "false"]).default("false"),
+    ALLOW_DEMO_SEED: z.enum(["true", "false"]).default("false"),
+    ALLOW_DEMO_RESET: z.enum(["true", "false"]).default("false"),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === "production" && new URL(value.APP_URL).protocol !== "https:") {
@@ -50,6 +53,27 @@ const environmentSchema = z
         code: "custom",
         path: ["APP_URL"],
         message: "APP_URL must use https in production",
+      });
+    }
+    if (value.NODE_ENV === "production" && value.ALLOW_TEST_DATABASE_RESET === "true") {
+      context.addIssue({
+        code: "custom",
+        path: ["ALLOW_TEST_DATABASE_RESET"],
+        message: "must be false in production",
+      });
+    }
+    if (value.NODE_ENV === "production" && value.ALLOW_DEMO_SEED === "true") {
+      context.addIssue({
+        code: "custom",
+        path: ["ALLOW_DEMO_SEED"],
+        message: "must be false in production",
+      });
+    }
+    if (value.NODE_ENV === "production" && value.ALLOW_DEMO_RESET === "true") {
+      context.addIssue({
+        code: "custom",
+        path: ["ALLOW_DEMO_RESET"],
+        message: "must be false in production",
       });
     }
   });

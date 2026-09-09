@@ -31,3 +31,10 @@ Use synthetic examples and redact operational identifiers.
 ## Project status
 
 This project is an early open-source demonstration and is not declared production-ready for real patient information. Production healthcare deployment requires independent security and applicable legal/compliance review. No automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or another framework is claimed.
+
+## Supported beta
+
+The supported beta line is `0.1.0-beta.1`. Please reproduce reports with synthetic data only. Do not
+test against a real clinic, production deployment, patient database, or backup without explicit written
+authorization. This project does not promise a security-response SLA; private reporting is monitored as
+maintainer capacity allows.

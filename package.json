@@ -1,6 +1,6 @@
 {
   "name": "clinic-management",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "description": "Open-source foundation for a small-clinic practice-management application using synthetic data only.",
   "license": "Apache-2.0",
@@ -26,7 +26,13 @@
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "auth:create-doctor": "tsx --conditions=react-server scripts/auth-create-doctor.ts",
-    "auth:reset-doctor-password": "tsx --conditions=react-server scripts/auth-reset-doctor-password.ts"
+    "auth:reset-doctor-password": "tsx --conditions=react-server scripts/auth-reset-doctor-password.ts",
+    "db:seed:demo": "tsx --conditions=react-server scripts/db-seed-demo.ts",
+    "db:backup": "scripts/db-backup.sh",
+    "db:restore": "scripts/db-restore.sh",
+    "security:scan": "tsx scripts/security-scan.ts",
+    "test:e2e": "pnpm build && pnpm db:migrate && pnpm tsx --conditions=react-server tests/e2e/prepare.ts && playwright test",
+    "test:e2e:headed": "pnpm build && pnpm db:migrate && pnpm tsx --conditions=react-server tests/e2e/prepare.ts && playwright test --headed"
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.0",
@@ -34,7 +40,7 @@
     "date-fns": "4.4.0",
     "date-fns-tz": "3.2.0",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.11",
+    "next": "16.3.3",
     "pdfkit": "0.20.2",
     "postgres": "3.4.7",
     "react": "19.2.8",
@@ -43,6 +49,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.55.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.13.3",
     "@types/pdfkit": "0.17.6",
@@ -56,6 +63,6 @@
     "tailwindcss": "4.3.3",
     "tsx": "4.23.13",
     "typescript": "5.9.3",
-    "vitest": "4.0.17"
+    "vitest": "4.1.11"
   }
 }

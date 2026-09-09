@@ -18,6 +18,9 @@ describe("parseEnvironment", () => {
       AUTH_ARGON2_TIME_COST: 3,
       AUTH_ARGON2_PARALLELISM: 1,
       AUTH_TRUSTED_PROXY_CIDRS: "",
+      ALLOW_TEST_DATABASE_RESET: "false",
+      ALLOW_DEMO_SEED: "false",
+      ALLOW_DEMO_RESET: "false",
     });
   });
 
@@ -77,5 +80,22 @@ describe("parseEnvironment", () => {
         APP_URL: "http://clinic.test",
       }),
     ).toThrow(/must use https in production/);
+  });
+
+  it("rejects destructive test and demo flags in production", () => {
+    for (const key of [
+      "ALLOW_TEST_DATABASE_RESET",
+      "ALLOW_DEMO_SEED",
+      "ALLOW_DEMO_RESET",
+    ] as const) {
+      expect(() =>
+        parseEnvironment({
+          ...validEnvironment,
+          NODE_ENV: "production",
+          APP_URL: "https://clinic.test",
+          [key]: "true",
+        }),
+      ).toThrow(new RegExp(`${key}.*false in production`));
+    }
   });
 });

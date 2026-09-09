@@ -8,3 +8,4 @@ overrides:
   "tsx>esbuild": 0.25.12
   "vite>esbuild": 0.25.12
   "vite>rollup": 4.60.1
+  "@esbuild-kit/core-utils>esbuild": 0.25.12

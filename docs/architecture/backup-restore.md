@@ -1,6 +1,8 @@
 # Backup and restore strategy
 
-This document is planning guidance for a future production deployment. Phase 0 does not configure production backups, retention schedules, recovery objectives, or automatic deletion.
+This document describes the beta operator procedure. The application does not encrypt or retain backup
+files itself; infrastructure operators must provide encrypted storage, access control, retention, and
+secure deletion.
 
 ## Backup approach
 
@@ -21,6 +23,21 @@ A backup is not considered usable until it has been restored successfully. On a 
 4. Record the test result and securely dispose of the restored copy when verification is complete.
 
 Restores must not use production data in developer machines or public test environments. Access to restored healthcare data requires the same controls as the primary database.
+
+## Local verification commands
+
+Use an isolated disposable database and never put a password in shell history or repository files:
+
+```bash
+DATABASE_URL=postgresql://operator@localhost:5432/clinic_restore_test \
+  scripts/db-backup.sh /tmp/clinic-synthetic.dump
+DATABASE_URL=postgresql://operator@localhost:5432/clinic_restore_test \
+  scripts/db-restore.sh /tmp/clinic-synthetic.dump
+```
+
+The Phase 8 restore check creates a synthetic source database, applies all migrations, backs it up,
+restores into a separate database, and verifies readiness plus representative relationship counts.
+Never use `clinic`, `postgres`, `staging`, or production-looking names for a destructive restore.
 
 ## Deployment decisions still required
 

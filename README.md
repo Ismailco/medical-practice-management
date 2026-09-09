@@ -4,11 +4,14 @@ Clinic Management is an open-source foundation for a small medical practice-mana
 
 ## Development status
 
-**Phase 7: Prescription PDF Generation and Printing** is implemented. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. Later clinical workflows are not implemented.
+**Beta 0.1.0-beta.1:** the first feature set is frozen and release hardening is in progress. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. This is an open-source beta, not production-ready healthcare software.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
 This project is not production-ready healthcare software. A real deployment requires an independent security review and all applicable legal and compliance reviews. The project does not claim automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or any other framework.
+
+Screenshots are intentionally not committed in the beta repository; run the synthetic demo seed locally
+to explore the workflows without exposing private data.
 
 ## Technology
 
@@ -90,6 +93,10 @@ pnpm db:check        # validate migration history
 pnpm db:studio       # local Drizzle Studio
 pnpm auth:create-doctor # interactively bootstrap the one doctor
 pnpm auth:reset-doctor-password # operator recovery for the doctor account
+pnpm test:e2e                 # production-mode Playwright workflow (isolated _test DB)
+pnpm db:seed:demo             # explicit synthetic demo seed (requires ALLOW_DEMO_SEED=true)
+pnpm db:backup /secure/clinic.dump
+pnpm db:restore /secure/clinic.dump
 ```
 
 Do not use runtime schema synchronization in production. Every schema change must be represented by a reviewed migration.
@@ -98,6 +105,10 @@ Integration tests reset their database between cases. The reset is guarded in co
 when `NODE_ENV=test`, `ALLOW_TEST_DATABASE_RESET=true`, and the parsed PostgreSQL database name ends
 in `_test` without production-like naming. Use a dedicated disposable database; the guard rejects
 the normal `clinic_demo` development database before issuing `TRUNCATE`.
+
+For browser tests, copy `.env.test.example` to a separate environment and use an isolated database.
+E2E preparation applies the same hard guard. It never overwrites `.env` or permits demo, staging, or
+production-looking database names. Demo credentials are synthetic and explicitly development-only.
 
 ## Authentication and account recovery
 
@@ -166,10 +177,15 @@ Medication intelligence, notification, attachment, billing, signature/stamp imag
 - [Architectural decisions](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
+- [Beta release notes](docs/releases/0.1.0-beta.md)
 
 ## Production warning
 
 The Compose configuration and example credentials are for local development only. A responsible production design requires HTTPS, private database networking, independently managed secrets, least-privilege database roles, encrypted and restore-tested backups, monitoring, incident response, and a deployment-specific security and legal review. Retention and disaster-recovery objectives are operator decisions and are not automated in V1.
+
+Known beta limitations include one clinic/doctor instance, English UI, no Arabic/RTL PDF, no notifications,
+patient portal, billing, medication intelligence, digital signatures, or stored PDF bytes. Exact legal
+prescription formatting remains a deployment/jurisdiction responsibility.
 
 ## License
 

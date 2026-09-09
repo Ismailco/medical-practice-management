@@ -101,3 +101,15 @@ Clinical revisions and addenda are plaintext at the application/database layer i
 ## Synthetic-data rule
 
 THIS REPOSITORY MUST NEVER CONTAIN REAL PATIENT DATA. Fixtures, seeds, screenshots, bug reports, and examples must be synthetic and must not be derived from identifiable people.
+
+## Beta release hardening
+
+Browser E2E setup uses a separate `.env.test.example` and the same destructive database guard as the
+integration suite. Reset preparation requires `NODE_ENV=test`, `ALLOW_TEST_DATABASE_RESET=true`, and a
+PostgreSQL database name ending in `_test`; the normal development/demo database is rejected before any
+truncate. Production configuration rejects test-reset and demo-seed flags.
+
+Clinical and prescription responses remain private/no-store. The browser only holds generated PDF bytes
+transiently in an object URL, which is revoked by the PDF action component; clinical content is not stored
+in localStorage, sessionStorage, IndexedDB, or a service-worker cache. PDF printing is delegated to the
+browser and is not represented as proof that a physical printer completed a job.
