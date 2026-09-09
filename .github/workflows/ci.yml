@@ -31,6 +31,7 @@ jobs:
       APP_URL: http://localhost:3000
       DATABASE_URL: postgresql://clinic_test:clinic_test@localhost:5432/clinic_test
       BETTER_AUTH_SECRET: ci-only-synthetic-secret-never-use-in-production
+      CLINIC_TIMEZONE: Africa/Casablanca
       ALLOW_TEST_DATABASE_RESET: true
       ALLOW_DEMO_SEED: false
       ALLOW_DEMO_RESET: false
