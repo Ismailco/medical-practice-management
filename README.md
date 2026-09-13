@@ -43,15 +43,6 @@ _Doctor dashboard using synthetic demo data._
 - PDFKit for server-generated A4 prescription documents
 - Docker Compose for local PostgreSQL
 
-## Engineering highlights
-
-- Server-side capability authorization and database-backed sessions.
-- Immutable clinical note revisions and finalized prescription history with issue snapshots.
-- Optimistic concurrency for edits and lifecycle transitions, including transactional prescription numbering.
-- Append-only audit events with sensitive clinical values excluded from metadata and logs.
-- Private, no-store responses for clinical and prescription content.
-- Synthetic demo mode and a hard guard around destructive integration-test database operations.
-
 ## Requirements
 
 - Node.js 24 or newer
