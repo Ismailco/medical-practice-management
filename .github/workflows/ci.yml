@@ -28,7 +28,7 @@ jobs:
           --health-retries 10
     env:
       NODE_ENV: test
-      APP_URL: http://localhost:3000
+      APP_URL: https://clinic.test
       DATABASE_URL: postgresql://clinic_test:clinic_test@localhost:5432/clinic_test
       BETTER_AUTH_SECRET: ci-only-synthetic-secret-never-use-in-production
       CLINIC_TIMEZONE: Africa/Casablanca
