@@ -78,7 +78,7 @@ describe("appointment scheduling workflows", () => {
         method: "PATCH",
         cookie: secretaryLogin.cookie,
         body: {
-          localDate: "2027-01-11",
+          localDate: "2027-02-15",
           localStartTime: "11:00",
           durationMinutes: 45,
           administrativeReason: "Rescheduled synthetic visit",
@@ -90,7 +90,7 @@ describe("appointment scheduling workflows", () => {
     expect(rescheduled.status).toBe(200);
     const [stored] = await db.select().from(appointment).where(eq(appointment.id, appointmentId));
     expect(stored?.version).toBe(2);
-    expect(stored?.scheduledStart.toISOString()).toBe("2027-01-11T10:00:00.000Z");
+    expect(stored?.scheduledStart.toISOString()).toBe("2027-02-15T11:00:00.000Z");
   });
 
   it("rejects unauthenticated operations and strict-schema privilege injection", async () => {
