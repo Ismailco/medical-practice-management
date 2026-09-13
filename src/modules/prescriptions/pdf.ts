@@ -232,6 +232,7 @@ function drawMoroccoHeader(document: PDFKit.PDFDocument, data: IssuedPrescriptio
       .text(data.clinic.name, logoX, 72, { width: logoSize, align: "center" });
   }
 
+  drawOverlay(document, data);
   document.strokeColor("#1d5f78").lineWidth(1).moveTo(leftX, 154).lineTo(553, 154).stroke();
   document.fillColor("#1d5f78").font("Helvetica-Bold").fontSize(19).text("ORDONNANCE", leftX, 166, {
     width: 511,
@@ -317,7 +318,8 @@ async function renderPrescriptionMoroccoV2(
   document.font("Helvetica-Bold").fontSize(12).text("Prescription", 42, document.y);
   drawArabic(document, "الوصفة الطبية", 390, document.y - 2, 163, { bold: true, fontSize: 10 });
   document.moveDown(0.55);
-  document.font("Helvetica").fontSize(10);
+  document.font("Helvetica").fontSize(10).text(`Number: ${data.prescriptionNumber}`);
+  document.moveDown(0.45);
 
   for (const [index, item] of data.items.entries()) {
     const detailLines = fieldLines(item);
@@ -405,7 +407,8 @@ async function renderPrescriptionMoroccoV3(
       align: "right",
     });
   document.moveDown(3.2);
-  document.font("Helvetica").fontSize(10);
+  document.font("Helvetica").fontSize(10).text(`Number: ${data.prescriptionNumber}`);
+  document.moveDown(1.1);
 
   for (const [index, item] of data.items.entries()) {
     const detailLines = fieldLines(item);
