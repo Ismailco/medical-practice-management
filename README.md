@@ -1,24 +1,33 @@
-# Clinic Management
+# Medical Practice Management
 
-Clinic Management is an open-source practice management application for small medical clinics and cabinets. It covers administrative patient records, appointments, doctor-only consultations and clinical note history, follow-ups, prescriptions, printable prescription PDFs, and separate doctor/secretary authorization.
+[![CI](https://github.com/Ismailco/medical-practice-management/actions/workflows/ci.yml/badge.svg)](https://github.com/Ismailco/medical-practice-management/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/Ismailco/medical-practice-management?include_prereleases&label=latest%20release)](https://github.com/Ismailco/medical-practice-management/releases)
+[![Apache-2.0 license](https://img.shields.io/github/license/Ismailco/medical-practice-management)](LICENSE)
 
-## Development status
+Medical Practice Management is an open-source clinic workstation for small medical practices. It provides administrative patient records, appointment scheduling, doctor-only consultations and follow-ups, prescription workflows, and separate doctor/secretary authorization on a PostgreSQL-backed Next.js/TypeScript architecture.
 
-**Beta 0.1.0-beta.2:** includes the initial practice-management workflow, release hardening, a redesigned clinic workstation interface, and Moroccan/bilingual prescription-document improvements. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. This is an open-source beta, not production-ready healthcare software.
-
-> **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
-
-This project is not production-ready healthcare software. A real deployment requires an independent security review and all applicable legal and compliance reviews. The project does not claim automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or any other framework.
-
-## Screenshots
-
-All screenshots use synthetic demo data. The complete set is in [`docs/assets/screenshots/`](docs/assets/screenshots/).
+This is the current `0.1.0-beta.2` release. The repository and its demos contain synthetic data only; the project does not automatically provide healthcare compliance. A real deployment requires independent security, legal, and infrastructure review.
 
 ![Doctor dashboard](docs/assets/screenshots/dashboard-doctor.png)
-![Daily appointments](docs/assets/screenshots/appointments.png)
-![Consultations](docs/assets/screenshots/consultation.png)
-![Finalized prescription](docs/assets/screenshots/prescription-finalized-detail.png)
-![Prescription PDF](docs/assets/screenshots/prescription-pdf.png)
+
+_Doctor dashboard using synthetic demo data._
+
+## Engineering highlights
+
+- Server-side capability authorization with PostgreSQL-backed sessions.
+- Immutable clinical-note revisions and immutable finalized prescription issue snapshots.
+- Optimistic concurrency and transactional prescription numbering.
+- Append-only audit records with sensitive values excluded from audit metadata and logs.
+- Private, `no-store` responses for clinical and prescription content.
+- A hard destructive-test database guard and PostgreSQL integration tests.
+- Playwright end-to-end coverage, CI, and CodeQL.
+
+## Core capabilities
+
+- Administrative patient records and appointments for authenticated staff.
+- Doctor-only consultations, immutable clinical-note history, and follow-ups.
+- Physician-entered prescription drafts, finalization, voiding, replacement, and A4 PDF generation.
+- Separate doctor and secretary capabilities without public registration or password recovery.
 
 ## Technology
 
@@ -49,7 +58,7 @@ All screenshots use synthetic demo data. The complete set is in [`docs/assets/sc
 - pnpm 11 or newer
 - Docker with Docker Compose
 
-## Setup
+## Quick start
 
 ```bash
 pnpm install
@@ -181,16 +190,28 @@ src/lib/            narrowly scoped shared infrastructure
 docs/architecture/  system, security, and data-model documentation
 docs/adr/           architectural decision records
 drizzle/            generated and reviewed database migrations
-tests/              future integration and end-to-end test support
+tests/              unit, PostgreSQL integration, and Playwright end-to-end tests
 ```
 
 Medication intelligence, notification, attachment, billing, signature/stamp images, and PDF-byte archival modules do not exist. Bilingual Arabic profile fields and Arabic glyph output are supported in the current Moroccan prescription template using bundled fonts; full application RTL localization, complete bidi/shaping support, and jurisdiction-specific legal formatting remain deferred.
+
+## Screenshots
+
+All screenshots use synthetic demo data. This representative gallery shows the main workflows; see [`docs/assets/screenshots/`](docs/assets/screenshots/) for the full set.
+
+| Daily appointments                                              | Consultation workspace                                              |
+| --------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ![Daily appointments](docs/assets/screenshots/appointments.png) | ![Consultation workspace](docs/assets/screenshots/consultation.png) |
+
+| Finalized prescription                                                               | Prescription PDF                                                  |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| ![Finalized prescription](docs/assets/screenshots/prescription-finalized-detail.png) | ![Prescription PDF](docs/assets/screenshots/prescription-pdf.png) |
 
 ## Documentation
 
 - [Architecture overview](docs/architecture/overview.md)
 - [Security architecture](docs/architecture/security.md)
-- [Planned data model](docs/architecture/data-model.md)
+- [Data model](docs/architecture/data-model.md)
 - [Backup and restore strategy](docs/architecture/backup-restore.md)
 - [Architectural decisions](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
