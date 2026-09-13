@@ -1,6 +1,6 @@
 {
   "name": "clinic-management",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "private": true,
   "description": "Open-source foundation for a small-clinic practice-management application using synthetic data only.",
   "license": "Apache-2.0",

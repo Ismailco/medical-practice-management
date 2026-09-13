@@ -4,7 +4,7 @@ Clinic Management is an open-source practice management application for small me
 
 ## Development status
 
-**Beta 0.1.0-beta.1:** the first feature set is frozen and release hardening is in progress. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. This is an open-source beta, not production-ready healthcare software.
+**Beta 0.1.0-beta.2:** includes the initial practice-management workflow, release hardening, a redesigned clinic workstation interface, and Moroccan/bilingual prescription-document improvements. Authenticated staff can manage administrative patient records and appointments. Doctors additionally manage consultation records, follow-ups, physician-entered prescriptions with immutable issued history, and regenerate A4 PDFs from finalized issue snapshots. This is an open-source beta, not production-ready healthcare software.
 
 > **Synthetic data only:** this repository, its fixtures, and any public demonstration must never contain real patient data or identifiable information copied from real people.
 
@@ -184,7 +184,7 @@ drizzle/            generated and reviewed database migrations
 tests/              future integration and end-to-end test support
 ```
 
-Medication intelligence, notification, attachment, billing, signature/stamp images, and PDF-byte archival modules do not exist. Arabic/RTL rendering and jurisdiction-specific legal formatting remain deferred.
+Medication intelligence, notification, attachment, billing, signature/stamp images, and PDF-byte archival modules do not exist. Bilingual Arabic profile fields and Arabic glyph output are supported in the current Moroccan prescription template using bundled fonts; full application RTL localization, complete bidi/shaping support, and jurisdiction-specific legal formatting remain deferred.
 
 ## Documentation
 
@@ -195,13 +195,15 @@ Medication intelligence, notification, attachment, billing, signature/stamp imag
 - [Architectural decisions](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
-- [Beta release notes](docs/releases/0.1.0-beta.md)
+- [0.1.0-beta.2 release notes](docs/releases/0.1.0-beta.2.md)
+- [0.1.0-beta.1 release notes](docs/releases/0.1.0-beta.md)
 
 ## Production warning
 
 The Compose configuration and example credentials are for local development only. A responsible production design requires HTTPS, private database networking, independently managed secrets, least-privilege database roles, encrypted and restore-tested backups, monitoring, incident response, and a deployment-specific security and legal review. Retention and disaster-recovery objectives are operator decisions and are not automated in V1.
 
-Known beta limitations include one clinic/doctor instance, English UI, no Arabic/RTL PDF, no notifications,
+Known beta limitations include one clinic/doctor instance, English UI, no full application RTL localization
+or complete bidi/shaping support, no notifications,
 patient portal, billing, medication intelligence, digital signatures, or stored PDF bytes. Exact legal
 prescription formatting remains a deployment/jurisdiction responsibility.
 

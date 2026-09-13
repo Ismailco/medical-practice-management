@@ -34,7 +34,7 @@ This project is an early open-source demonstration and is not declared productio
 
 ## Supported beta
 
-The supported beta line is `0.1.0-beta.1`. Please reproduce reports with synthetic data only. Do not
+The supported beta line is `0.1.0-beta.2`. Please reproduce reports with synthetic data only. Do not
 test against a real clinic, production deployment, patient database, or backup without explicit written
 authorization. This project does not promise a security-response SLA; private reporting is monitored as
 maintainer capacity allows.
