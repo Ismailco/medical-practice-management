@@ -12,6 +12,9 @@ import {
   nextCalendarDate,
 } from "@/modules/appointments/timezone";
 import { agendaQuerySchema } from "@/modules/appointments/validation";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -53,35 +56,21 @@ export default async function AppointmentsPage({ searchParams }: Props) {
 
   return (
     <section>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold tracking-wider text-teal-800 uppercase">
-            Daily agenda
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">
-            Appointments
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">Times shown in {clinicTimezone()}.</p>
-        </div>
-        <Link
-          className="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900"
-          href="/appointments/new"
-        >
-          New appointment
-        </Link>
-      </div>
+      <PageHeader
+        title="Appointments"
+        description={`Daily agenda · times shown in ${clinicTimezone()}.`}
+        actions={
+          <Link className="btn btn-primary" href="/appointments/new">
+            New appointment
+          </Link>
+        }
+      />
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-3">
-        <Link
-          className="rounded-md border px-3 py-2 text-sm font-medium"
-          href={`/appointments?date=${shiftDate(date, -1)}`}
-        >
+      <div className="surface agenda-toolbar flex flex-wrap items-center gap-2 p-3">
+        <Link className="btn btn-secondary" href={`/appointments?date=${shiftDate(date, -1)}`}>
           ← Previous
         </Link>
-        <Link
-          className="rounded-md border px-3 py-2 text-sm font-medium"
-          href={`/appointments?date=${clinicToday()}`}
-        >
+        <Link className="btn btn-secondary" href={`/appointments?date=${clinicToday()}`}>
           Today
         </Link>
         <form className="flex items-center gap-2" method="get">
@@ -89,9 +78,10 @@ export default async function AppointmentsPage({ searchParams }: Props) {
             Agenda date
           </label>
           <input
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="field-control agenda-date"
             defaultValue={date}
             id="agenda-date"
+            lang="en-GB"
             name="date"
             type="date"
           />
@@ -99,7 +89,7 @@ export default async function AppointmentsPage({ searchParams }: Props) {
             Status
           </label>
           <select
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="field-control agenda-status"
             defaultValue={status ?? ""}
             id="agenda-status"
             name="status"
@@ -111,62 +101,94 @@ export default async function AppointmentsPage({ searchParams }: Props) {
               </option>
             ))}
           </select>
-          <button className="rounded-md border px-3 py-2 text-sm font-medium" type="submit">
+          <button className="btn btn-secondary" type="submit">
             Go
           </button>
         </form>
-        <Link
-          className="rounded-md border px-3 py-2 text-sm font-medium"
-          href={`/appointments?date=${shiftDate(date, 1)}`}
-        >
+        <Link className="btn btn-secondary" href={`/appointments?date=${shiftDate(date, 1)}`}>
           Next →
         </Link>
       </div>
 
-      <h2 className="mt-7 text-xl font-semibold text-slate-950">
-        {formatClinicDateTime(clinicDayRange(date).start, "EEEE, dd MMMM yyyy")}
-      </h2>
-      <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <SectionHeader
+        title={formatClinicDateTime(clinicDayRange(date).start, "EEEE, d MMMM yyyy")}
+      />
+      <div className="surface agenda-surface mt-3 overflow-hidden">
         {agenda.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-600">
-            No appointments scheduled for this day.
-          </p>
+          <EmptyState
+            title="No appointments today"
+            description="Nothing is scheduled for this date."
+            action={
+              <Link className="btn btn-primary" href="/appointments/new">
+                New appointment
+              </Link>
+            }
+          />
         ) : (
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-              <tr>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Patient</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Administrative reason</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+          <>
+            <table className="agenda-table min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                <tr>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Patient</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Administrative reason</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {agenda.map((item) => (
+                  <tr key={item.id}>
+                    <td className="whitespace-nowrap px-4 py-3 font-semibold">
+                      {formatClinicDateTime(new Date(item.scheduledStart), "HH:mm")}–
+                      {formatClinicDateTime(new Date(item.scheduledEnd), "HH:mm")}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        className="font-medium text-slate-950 hover:underline"
+                        href={`/patients/${item.patientId}`}
+                      >
+                        {item.patientDisplayName}
+                      </Link>
+                      <div className="font-mono text-xs text-slate-500">{item.patientNumber}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={item.status} label={statusLabels[item.status]} />
+                    </td>
+                    <td className="max-w-xs truncate px-4 py-3 text-slate-600">
+                      {item.administrativeReason ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <AppointmentActions
+                        allowedTransitions={allowedTransitions(user.role, item.status)}
+                        appointmentId={item.id}
+                        compact
+                        status={item.status}
+                        version={item.version}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="agenda-cards">
               {agenda.map((item) => (
-                <tr key={item.id}>
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold">
-                    {formatClinicDateTime(new Date(item.scheduledStart), "HH:mm")}–
-                    {formatClinicDateTime(new Date(item.scheduledEnd), "HH:mm")}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      className="font-medium text-slate-950 hover:underline"
-                      href={`/patients/${item.patientId}`}
-                    >
-                      {item.patientDisplayName}
-                    </Link>
-                    <div className="font-mono text-xs text-slate-500">{item.patientNumber}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium">
-                      {statusLabels[item.status]}
-                    </span>
-                  </td>
-                  <td className="max-w-xs truncate px-4 py-3 text-slate-600">
-                    {item.administrativeReason ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
+                <article className="agenda-card" key={item.id}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="agenda-time">
+                      {formatClinicDateTime(new Date(item.scheduledStart), "HH:mm")}–
+                      {formatClinicDateTime(new Date(item.scheduledEnd), "HH:mm")}
+                    </div>
+                    <StatusBadge status={item.status} label={statusLabels[item.status]} />
+                  </div>
+                  <Link className="agenda-patient" href={`/patients/${item.patientId}`}>
+                    {item.patientDisplayName}
+                  </Link>
+                  <div className="font-mono text-xs text-slate-500">{item.patientNumber}</div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {item.administrativeReason ?? "No administrative reason"}
+                  </p>
+                  <div className="mt-4">
                     <AppointmentActions
                       allowedTransitions={allowedTransitions(user.role, item.status)}
                       appointmentId={item.id}
@@ -174,21 +196,23 @@ export default async function AppointmentsPage({ searchParams }: Props) {
                       status={item.status}
                       version={item.version}
                     />
-                  </td>
-                </tr>
+                  </div>
+                </article>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
 
-      <div className="mt-10 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-950">Upcoming seven days</h2>
+      <div className="mt-8 flex items-center justify-between">
+        <h2 className="section-title">Upcoming seven days</h2>
         <span className="text-sm text-slate-500">{upcoming.length} active</span>
       </div>
-      <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+      <ul className="surface mt-3 divide-y overflow-hidden">
         {upcoming.length === 0 ? (
-          <li className="p-6 text-sm text-slate-600">No upcoming appointments.</li>
+          <li className="p-6 text-sm text-slate-600">
+            No active appointments in the next seven days.
+          </li>
         ) : (
           upcoming.map((item) => (
             <li
@@ -200,11 +224,13 @@ export default async function AppointmentsPage({ searchParams }: Props) {
                   {item.patientDisplayName}
                 </Link>
                 <p className="text-sm text-slate-600">
-                  {formatClinicDateTime(new Date(item.scheduledStart))} ·{" "}
-                  {statusLabels[item.status]}
+                  {formatClinicDateTime(new Date(item.scheduledStart))}
                 </p>
               </div>
-              <span className="font-mono text-xs text-slate-500">{item.patientNumber}</span>
+              <span className="flex items-center gap-3">
+                <StatusBadge status={item.status} label={statusLabels[item.status]} />
+                <span className="font-mono text-xs text-slate-500">{item.patientNumber}</span>
+              </span>
             </li>
           ))
         )}

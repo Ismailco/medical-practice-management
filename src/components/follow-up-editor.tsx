@@ -59,10 +59,12 @@ export function FollowUpEditor({
           className="mt-1.5 rounded-md border border-slate-300 px-3 py-2"
           defaultValue={dueDate}
           id="follow-up-due-date"
+          lang="en-GB"
           name="dueDate"
           required
           type="date"
         />
+        <p className="field-help">Day / month / year</p>
       </div>
       <div>
         <label className="block text-sm font-medium" htmlFor="follow-up-reason">

@@ -32,53 +32,66 @@ type Profile = {
 export function PracticeProfileForm({ initial }: Readonly<{ initial: Profile }>) {
   const router = useRouter();
   const [profile, setProfile] = useState(initial);
+  const [savedProfile, setSavedProfile] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const isDirty = JSON.stringify(profile) !== JSON.stringify(savedProfile);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving || !isDirty) return;
+    setSaving(true);
     setError(null);
     setSaved(false);
-    const response = await fetch("/api/settings/practice", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        clinic: {
-          name: profile.clinic.name,
-          nameArabic: profile.clinic.nameArabic,
-          address: profile.clinic.address,
-          addressArabic: profile.clinic.addressArabic,
-          city: profile.clinic.city,
-          cityArabic: profile.clinic.cityArabic,
-          phone: profile.clinic.phone,
-          phoneSecondary: profile.clinic.phoneSecondary,
-          email: profile.clinic.email,
-          logoDataUrl: profile.clinic.logoDataUrl,
-          expectedVersion: profile.clinic.version || null,
-        },
-        doctor: {
-          displayName: profile.doctor.displayName,
-          displayNameArabic: profile.doctor.displayNameArabic,
-          specialty: profile.doctor.specialty,
-          specialtyArabic: profile.doctor.specialtyArabic,
-          professionalIdentifier: profile.doctor.professionalIdentifier,
-          socialMedia: profile.doctor.socialMedia,
-          expectedVersion: profile.doctor.version || null,
-        },
-      }),
-    });
-    const result = (await response.json()) as {
-      error?: string;
-      clinic?: Profile["clinic"];
-      doctor?: Profile["doctor"];
-    };
-    if (!response.ok || !result.clinic || !result.doctor) {
-      setError(result.error ?? "The practice profile could not be saved.");
-      return;
+    try {
+      const response = await fetch("/api/settings/practice", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          clinic: {
+            name: profile.clinic.name,
+            nameArabic: profile.clinic.nameArabic,
+            address: profile.clinic.address,
+            addressArabic: profile.clinic.addressArabic,
+            city: profile.clinic.city,
+            cityArabic: profile.clinic.cityArabic,
+            phone: profile.clinic.phone,
+            phoneSecondary: profile.clinic.phoneSecondary,
+            email: profile.clinic.email,
+            logoDataUrl: profile.clinic.logoDataUrl,
+            expectedVersion: profile.clinic.version || null,
+          },
+          doctor: {
+            displayName: profile.doctor.displayName,
+            displayNameArabic: profile.doctor.displayNameArabic,
+            specialty: profile.doctor.specialty,
+            specialtyArabic: profile.doctor.specialtyArabic,
+            professionalIdentifier: profile.doctor.professionalIdentifier,
+            socialMedia: profile.doctor.socialMedia,
+            expectedVersion: profile.doctor.version || null,
+          },
+        }),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        clinic?: Profile["clinic"];
+        doctor?: Profile["doctor"];
+      };
+      if (!response.ok || !result.clinic || !result.doctor) {
+        setError(result.error ?? "The practice profile could not be saved.");
+        return;
+      }
+      const nextProfile = { clinic: result.clinic, doctor: result.doctor };
+      setProfile(nextProfile);
+      setSavedProfile(nextProfile);
+      setSaved(true);
+      router.refresh();
+    } catch {
+      setError("The practice profile could not be saved.");
+    } finally {
+      setSaving(false);
     }
-    setProfile({ clinic: result.clinic, doctor: result.doctor });
-    setSaved(true);
-    router.refresh();
   }
 
   function handleLogoChange(event: ChangeEvent<HTMLInputElement>) {
@@ -110,7 +123,7 @@ export function PracticeProfileForm({ initial }: Readonly<{ initial: Profile }>)
   }
 
   return (
-    <form className="mt-6 space-y-8" onSubmit={save}>
+    <form className="practice-profile-form mt-6 space-y-8" onSubmit={save}>
       <fieldset className="rounded-lg border border-slate-200 bg-white p-6">
         <legend className="px-2 text-lg font-semibold">Clinic profile</legend>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -340,15 +353,26 @@ export function PracticeProfileForm({ initial }: Readonly<{ initial: Profile }>)
         Jurisdiction-specific prescription identifiers and legal formatting are not determined by
         this application.
       </p>
-      <div className="flex items-center gap-3">
-        <button
-          className="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white"
-          type="submit"
-        >
-          Save practice profile
+      <div aria-live="polite" className="sticky-actions practice-profile-actions">
+        <button className="btn btn-primary" disabled={saving || !isDirty} type="submit">
+          {saving ? "Saving…" : "Save practice profile"}
         </button>
-        {saved ? <span className="text-sm text-teal-800">Saved.</span> : null}
-        {error ? <span className="text-sm text-red-700">{error}</span> : null}
+        <span className="text-sm text-slate-600">
+          {saving
+            ? "Saving…"
+            : error
+              ? "Unable to save changes"
+              : saved
+                ? "Changes saved"
+                : isDirty
+                  ? "Unsaved changes"
+                  : "No unsaved changes"}
+        </span>
+        {error ? (
+          <span className="basis-full text-sm text-red-700" role="alert">
+            {error}
+          </span>
+        ) : null}
       </div>
     </form>
   );

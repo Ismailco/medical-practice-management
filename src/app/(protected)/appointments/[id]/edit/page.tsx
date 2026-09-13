@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AppointmentForm } from "@/components/appointment-form";
@@ -6,6 +5,7 @@ import { requirePageCapability } from "@/modules/auth/page";
 import { findAppointmentById } from "@/modules/appointments/repository";
 import { toClinicFormValues } from "@/modules/appointments/timezone";
 import { appointmentIdSchema } from "@/modules/appointments/validation";
+import { PageHeader } from "@/components/ui/page-header";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -20,15 +20,14 @@ export default async function EditAppointmentPage({ params }: Props) {
   const end = new Date(item.scheduledEnd);
   const local = toClinicFormValues(start);
   return (
-    <section className="max-w-3xl">
-      <Link
-        className="text-sm font-medium text-teal-800 hover:underline"
-        href={`/appointments/${item.id}`}
-      >
-        ← Back to appointment
-      </Link>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">Reschedule appointment</h1>
-      <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
+    <section className="form-page">
+      <PageHeader
+        backHref={`/appointments/${item.id}`}
+        backLabel="Back to appointment"
+        title="Reschedule appointment"
+        description={`${item.patientDisplayName} · administrative appointment details`}
+      />
+      <div className="surface form-surface p-6">
         <AppointmentForm
           initial={{
             id: item.id,

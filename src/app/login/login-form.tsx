@@ -42,12 +42,12 @@ export function LoginForm() {
   return (
     <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
       <div>
-        <label className="block text-sm font-medium text-slate-800" htmlFor="email">
+        <label className="field-label" htmlFor="email">
           Email
         </label>
         <input
           autoComplete="username"
-          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+          className="field-control mt-2"
           id="email"
           name="email"
           required
@@ -56,12 +56,12 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-800" htmlFor="password">
+        <label className="field-label" htmlFor="password">
           Password
         </label>
         <input
           autoComplete="current-password"
-          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+          className="field-control mt-2"
           id="password"
           maxLength={128}
           minLength={12}
@@ -81,11 +81,7 @@ export function LoginForm() {
         </p>
       ) : null}
 
-      <button
-        className="w-full rounded-lg bg-teal-800 px-4 py-2.5 font-medium text-white hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={pending}
-        type="submit"
-      >
+      <button className="btn btn-primary w-full" disabled={pending} type="submit">
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>

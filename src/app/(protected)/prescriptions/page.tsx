@@ -2,6 +2,10 @@ import Link from "next/link";
 
 import { requirePageCapability } from "@/modules/auth/page";
 import { listPrescriptions } from "@/modules/prescriptions/repository";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatDateOnly } from "@/lib/presentation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,16 +15,18 @@ export default async function PrescriptionsPage() {
   const prescriptions = await listPrescriptions();
   return (
     <section>
-      <p className="text-sm font-semibold tracking-wider text-teal-800 uppercase">
-        Clinical workflow
-      </p>
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Prescriptions</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Physician-entered prescription history. No recommendations are generated.
-      </p>
-      <ul className="mt-7 divide-y rounded-lg border border-slate-200 bg-white">
+      <PageHeader
+        title="Prescriptions"
+        description="Physician-entered prescription history. No recommendations are generated."
+      />
+      <ul className="surface mt-4 divide-y overflow-hidden">
         {prescriptions.length === 0 ? (
-          <li className="p-6 text-sm text-slate-600">No prescriptions yet.</li>
+          <li>
+            <EmptyState
+              title="No prescriptions yet"
+              description="Issued prescriptions and active drafts will appear here."
+            />
+          </li>
         ) : (
           prescriptions.map((item) => (
             <li
@@ -39,8 +45,10 @@ export default async function PrescriptionsPage() {
                 </p>
               </div>
               <div className="text-right text-sm text-slate-600">
-                <div>{item.status}</div>
-                <div>{item.issueDate ?? "Not issued"}</div>
+                <StatusBadge status={item.status} />
+                <div className="mt-2">
+                  {item.issueDate ? formatDateOnly(item.issueDate) : "Not issued"}
+                </div>
               </div>
             </li>
           ))

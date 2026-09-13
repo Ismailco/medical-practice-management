@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function PrescriptionActions({
   id,
@@ -17,6 +18,7 @@ export function PrescriptionActions({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"finalize" | "discard" | "void" | null>(null);
 
   async function call(path: string, body?: unknown) {
     setBusy(true);
@@ -42,55 +44,16 @@ export function PrescriptionActions({
   }
 
   if (status === "DRAFT") {
-    return (
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          className="rounded-md bg-teal-800 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          disabled={busy}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Finalizing issues this prescription and locks its contents. Corrections require a new replacement prescription.",
-              )
-            ) {
-              void call("finalize", { expectedVersion: version });
-            }
-          }}
-          type="button"
-        >
-          Finalize prescription
-        </button>
-        <button
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
-          disabled={busy}
-          onClick={() => {
-            if (window.confirm("Discard this draft? It has not been issued."))
-              void call("discard", { expectedVersion: version });
-          }}
-          type="button"
-        >
-          Discard draft
-        </button>
-        {error ? <p className="basis-full text-sm text-red-700">{error}</p> : null}
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       {status === "FINALIZED" ? (
         <button
-          className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-800 disabled:opacity-50"
+          className="btn btn-danger"
           disabled={busy}
-          onClick={() => {
-            if (
-              window.confirm(
-                `Void ${prescriptionNumber ?? "this prescription"}? It will remain in history.`,
-              )
-            ) {
-              void call("void", { expectedVersion: version });
-            }
-          }}
+          onClick={() => setConfirmAction("void")}
           type="button"
         >
           Void prescription
@@ -98,7 +61,7 @@ export function PrescriptionActions({
       ) : null}
       <>
         <button
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
+          className="btn btn-secondary"
           disabled={busy}
           onClick={() => void call("duplicate")}
           type="button"
@@ -106,7 +69,7 @@ export function PrescriptionActions({
           Duplicate as draft
         </button>
         <button
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
+          className="btn btn-secondary"
           disabled={busy}
           onClick={() => void call("replace")}
           type="button"
@@ -115,6 +78,37 @@ export function PrescriptionActions({
         </button>
       </>
       {error ? <p className="basis-full text-sm text-red-700">{error}</p> : null}
+      <ConfirmDialog
+        confirmLabel={
+          confirmAction === "void"
+            ? "Void prescription"
+            : confirmAction === "discard"
+              ? "Discard draft"
+              : "Finalize prescription"
+        }
+        danger={confirmAction === "void" || confirmAction === "discard"}
+        description={
+          confirmAction === "void"
+            ? `${prescriptionNumber ?? "This prescription"} remains in history but is marked not valid for use.`
+            : confirmAction === "discard"
+              ? "This draft has not been issued and will be removed from active work."
+              : "Issuing the prescription locks its contents. Corrections require a new replacement prescription."
+        }
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={() => {
+          const action = confirmAction;
+          setConfirmAction(null);
+          if (action) void call(action, { expectedVersion: version });
+        }}
+        open={confirmAction !== null}
+        title={
+          confirmAction === "void"
+            ? `Void ${prescriptionNumber ?? "prescription"}?`
+            : confirmAction === "discard"
+              ? "Discard this draft?"
+              : "Finalize this prescription?"
+        }
+      />
     </div>
   );
 }

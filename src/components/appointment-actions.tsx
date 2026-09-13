@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { AppointmentStatus } from "@/modules/appointments/validation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const labels: Readonly<Record<AppointmentStatus, string>> = {
   SCHEDULED: "Scheduled",
@@ -33,10 +34,10 @@ export function AppointmentActions({
   const router = useRouter();
   const [pending, setPending] = useState<AppointmentStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   async function transition(targetStatus: AppointmentStatus) {
     if (pending) return;
-    if (targetStatus === "CANCELLED" && !window.confirm("Cancel this appointment?")) return;
     setPending(targetStatus);
     setError(null);
     try {
@@ -102,12 +103,16 @@ export function AppointmentActions({
           <button
             className={`rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
               target === "CANCELLED"
-                ? "border border-red-300 text-red-800 hover:bg-red-50"
-                : "border border-slate-300 hover:bg-slate-50"
+                ? "btn btn-danger"
+                : target === "ARRIVED" || target === "IN_CONSULTATION"
+                  ? "btn btn-primary"
+                  : "btn btn-secondary"
             }`}
             disabled={pending !== null}
             key={target}
-            onClick={() => transition(target)}
+            onClick={() =>
+              target === "CANCELLED" ? setConfirmCancel(true) : void transition(target)
+            }
             type="button"
           >
             {pending === target ? "Saving…" : labels[target]}
@@ -127,6 +132,18 @@ export function AppointmentActions({
           {error}
         </p>
       ) : null}
+      <ConfirmDialog
+        confirmLabel="Cancel appointment"
+        danger
+        description="The appointment will remain in history with its cancelled status."
+        onCancel={() => setConfirmCancel(false)}
+        onConfirm={() => {
+          setConfirmCancel(false);
+          void transition("CANCELLED");
+        }}
+        open={confirmCancel}
+        title="Cancel this appointment?"
+      />
     </div>
   );
 }

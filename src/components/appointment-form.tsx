@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Button } from "@/components/ui/button";
+import { validationMessage } from "@/lib/presentation";
 
 type PatientOption = Readonly<{
   id: string;
@@ -40,9 +43,9 @@ function isPatientOption(value: unknown): value is PatientOption {
 function readFieldErrors(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || !("fieldErrors" in value)) return {};
   return Object.fromEntries(
-    Object.entries(value.fieldErrors ?? {}).filter(
-      (entry): entry is [string, string] => typeof entry[1] === "string",
-    ),
+    Object.entries(value.fieldErrors ?? {})
+      .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+      .map(([field, error]) => [field, validationMessage(field, error)]),
   );
 }
 
@@ -57,6 +60,8 @@ export function AppointmentForm({ defaultDate, initialPatient, initial }: Props)
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [overlapRequest, setOverlapRequest] = useState<Record<string, unknown> | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const editing = initial !== undefined;
 
   useEffect(() => {
@@ -124,19 +129,62 @@ export function AppointmentForm({ defaultDate, initialPatient, initial }: Props)
     };
 
     try {
-      let response = await save(body, false);
-      let result: unknown = await response.json().catch(() => null);
+      const response = await save(body, false);
+      const result: unknown = await response.json().catch(() => null);
       if (
         response.status === 409 &&
-        result !== null &&
+        result &&
         typeof result === "object" &&
         "code" in result &&
-        result.code === "APPOINTMENT_OVERLAP" &&
-        window.confirm("This time overlaps another active appointment. Schedule it anyway?")
+        result.code === "APPOINTMENT_OVERLAP"
       ) {
-        response = await save(body, true);
-        result = await response.json().catch(() => null);
+        setOverlapRequest(body);
+        setPending(false);
+        return;
       }
+      if (!response.ok) {
+        const error =
+          result &&
+          typeof result === "object" &&
+          "error" in result &&
+          typeof result.error === "string"
+            ? result.error
+            : "Unable to save the appointment.";
+        setMessage(Object.keys(readFieldErrors(result)).length > 0 ? null : error);
+        setFieldErrors(readFieldErrors(result));
+        return;
+      }
+      const id =
+        result &&
+        typeof result === "object" &&
+        "appointment" in result &&
+        result.appointment &&
+        typeof result.appointment === "object" &&
+        "id" in result.appointment &&
+        typeof result.appointment.id === "string"
+          ? result.appointment.id
+          : null;
+      if (!id) {
+        setMessage("The appointment was saved, but the response could not be read.");
+        return;
+      }
+      router.push(`/appointments/${id}`);
+      router.refresh();
+    } catch {
+      setMessage("Unable to save the appointment. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function continueWithOverlap() {
+    if (!overlapRequest) return;
+    const body = overlapRequest;
+    setOverlapRequest(null);
+    setPending(true);
+    try {
+      const response = await save(body, true);
+      const result: unknown = await response.json().catch(() => null);
       if (!response.ok) {
         const error =
           result &&
@@ -172,10 +220,20 @@ export function AppointmentForm({ defaultDate, initialPatient, initial }: Props)
     }
   }
 
-  const inputClass =
-    "mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100";
+  const inputClass = "field-control mt-1.5";
+  const errorEntries = Object.entries(fieldErrors);
   return (
     <form className="space-y-6" noValidate onSubmit={submit}>
+      {errorEntries.length > 0 ? (
+        <div className="error-summary" role="alert">
+          <h2>Please correct the highlighted fields.</h2>
+          <ul>
+            {errorEntries.map(([field, error]) => (
+              <li key={field}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <fieldset className="grid gap-5 sm:grid-cols-2" disabled={pending}>
         <legend className="sr-only">Appointment details</legend>
         <div className="sm:col-span-2">
@@ -241,15 +299,24 @@ export function AppointmentForm({ defaultDate, initialPatient, initial }: Props)
             Date
           </label>
           <input
+            aria-describedby={
+              fieldErrors.localDate ? "localDate-help localDate-error" : "localDate-help"
+            }
             className={inputClass}
             defaultValue={initial?.localDate ?? defaultDate}
             id="localDate"
+            lang="en-GB"
             name="localDate"
             required
             type="date"
           />
+          <p className="field-help" id="localDate-help">
+            Day / month / year
+          </p>
           {fieldErrors.localDate ? (
-            <p className="mt-1 text-sm text-red-700">{fieldErrors.localDate}</p>
+            <p className="mt-1 text-sm text-red-700" id="localDate-error">
+              {fieldErrors.localDate}
+            </p>
           ) : null}
         </div>
         <div>
@@ -313,21 +380,22 @@ export function AppointmentForm({ defaultDate, initialPatient, initial }: Props)
         </p>
       ) : null}
       <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
-        <button
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50"
-          onClick={() => router.back()}
-          type="button"
-        >
+        <Button onClick={() => router.back()} type="button">
           Cancel
-        </button>
-        <button
-          className="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900 disabled:opacity-50"
-          disabled={pending}
-          type="submit"
-        >
+        </Button>
+        <button className="btn btn-primary" disabled={pending} ref={submitButtonRef} type="submit">
           {pending ? "Saving…" : editing ? "Save changes" : "Schedule appointment"}
         </button>
       </div>
+      <ConfirmDialog
+        confirmLabel="Create anyway"
+        description="This overlaps another active appointment. You can continue only if the overlap is intentional."
+        onCancel={() => setOverlapRequest(null)}
+        onConfirm={() => void continueWithOverlap()}
+        open={overlapRequest !== null}
+        returnFocusRef={submitButtonRef}
+        title="Appointment overlap"
+      />
     </form>
   );
 }

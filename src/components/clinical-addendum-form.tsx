@@ -48,13 +48,13 @@ export function ClinicalAddendumForm({ consultationId }: { consultationId: strin
         New addendum
       </label>
       <textarea
-        className="mt-1.5 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+        className="field-control mt-1.5 min-h-28"
         id="addendum-content"
         maxLength={20000}
         name="content"
         required
       />
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="callout callout-warning mt-3">
         Addenda are permanent. Correct an error with another addendum.
       </p>
       {message ? (
@@ -62,11 +62,7 @@ export function ClinicalAddendumForm({ consultationId }: { consultationId: strin
           {message}
         </p>
       ) : null}
-      <button
-        className="mt-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
-        disabled={pending}
-        type="submit"
-      >
+      <button className="btn btn-secondary mt-3" disabled={pending} type="submit">
         {pending ? "Adding…" : "Add addendum"}
       </button>
     </form>

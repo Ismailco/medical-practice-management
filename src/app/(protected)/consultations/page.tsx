@@ -3,6 +3,9 @@ import Link from "next/link";
 import { requirePageCapability } from "@/modules/auth/page";
 import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import { listConsultations } from "@/modules/consultations/repository";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,18 +15,16 @@ export default async function ConsultationsPage() {
   const consultations = await listConsultations();
   return (
     <section>
-      <div>
-        <p className="text-sm font-semibold tracking-wider text-teal-800 uppercase">
-          Clinical records
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Consultations</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Doctor-only consultation history. Clinical text appears only inside a consultation.
-        </p>
-      </div>
-      <div className="mt-7 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <PageHeader
+        title="Consultations"
+        description="Doctor-only consultation history. Clinical text appears only inside a consultation."
+      />
+      <div className="surface mt-4 overflow-hidden">
         {consultations.length === 0 ? (
-          <p className="p-8 text-center text-sm text-slate-600">No consultations recorded.</p>
+          <EmptyState
+            title="No consultations recorded"
+            description="Consultations will appear here after a visit is started."
+          />
         ) : (
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
@@ -49,7 +50,7 @@ export default async function ConsultationsPage() {
                     <div className="font-mono text-xs text-slate-500">{item.patientNumber}</div>
                   </td>
                   <td className="px-4 py-3">
-                    {item.status === "IN_PROGRESS" ? "In progress" : "Finalized"}
+                    <StatusBadge status={item.status} />
                   </td>
                 </tr>
               ))}

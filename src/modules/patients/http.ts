@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ZodError } from "zod";
+import { validationMessage } from "@/lib/presentation";
 
 import { noStoreJson, safeRouteError } from "@/modules/auth/http";
 
@@ -11,7 +12,7 @@ export function patientRouteError(error: unknown): Response {
   for (const issue of error.issues) {
     const field = issue.path[0];
     if (typeof field === "string" && !(field in fieldErrors)) {
-      fieldErrors[field] = issue.message;
+      fieldErrors[field] = validationMessage(field, issue.message);
     }
   }
 

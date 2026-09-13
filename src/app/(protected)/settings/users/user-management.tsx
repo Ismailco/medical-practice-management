@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { readErrorMessage } from "@/lib/client-response";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type Secretary = Readonly<{
   id: string;
@@ -84,11 +85,10 @@ export function UserManagement({ users }: Props) {
                   <h3 className="font-medium text-slate-950">{user.name}</h3>
                   <p className="text-sm text-slate-600">{user.email}</p>
                 </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${user.active ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}
-                >
-                  {user.active ? "Active" : "Disabled"}
-                </span>
+                <StatusBadge
+                  status={user.active ? "ACTIVE" : "ARCHIVED"}
+                  label={user.active ? "Active" : "Disabled"}
+                />
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
@@ -106,40 +106,47 @@ export function UserManagement({ users }: Props) {
                   {user.active ? "Disable" : "Enable"}
                 </button>
               </div>
-              <form
-                className="mt-4 flex flex-col gap-2 sm:flex-row"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const data = new FormData(event.currentTarget);
-                  void update(
-                    user.id,
-                    { action: "reset_password", password: data.get("password") },
-                    `${user.id}:password`,
-                  );
-                  event.currentTarget.reset();
-                }}
-              >
-                <label className="sr-only" htmlFor={`password-${user.id}`}>
-                  New password for {user.name}
-                </label>
-                <input
-                  className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                  id={`password-${user.id}`}
-                  maxLength={128}
-                  minLength={12}
-                  name="password"
-                  placeholder="New password"
-                  required
-                  type="password"
-                />
-                <button
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-50"
-                  disabled={pendingKey !== null}
-                  type="submit"
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <h4 className="text-sm font-semibold text-slate-800">Reset password</h4>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  Takes effect immediately and signs out this secretary&apos;s existing sessions.
+                  Use at least 12 characters.
+                </p>
+                <form
+                  className="mt-3 flex flex-col gap-2 sm:flex-row"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const data = new FormData(event.currentTarget);
+                    void update(
+                      user.id,
+                      { action: "reset_password", password: data.get("password") },
+                      `${user.id}:password`,
+                    );
+                    event.currentTarget.reset();
+                  }}
                 >
-                  Set password
-                </button>
-              </form>
+                  <label className="sr-only" htmlFor={`password-${user.id}`}>
+                    New password for {user.name}
+                  </label>
+                  <input
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+                    id={`password-${user.id}`}
+                    maxLength={128}
+                    minLength={12}
+                    name="password"
+                    placeholder="New password"
+                    required
+                    type="password"
+                  />
+                  <button
+                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-50"
+                    disabled={pendingKey !== null}
+                    type="submit"
+                  >
+                    Set password
+                  </button>
+                </form>
+              </div>
             </article>
           ))}
         </div>

@@ -3,6 +3,7 @@ import "server-only";
 import { ZodError } from "zod";
 
 import { safeRouteError } from "@/modules/auth/http";
+import { validationMessage } from "@/lib/presentation";
 
 export function clinicalJson(body: unknown, init?: ResponseInit): Response {
   const headers = new Headers(init?.headers);
@@ -22,7 +23,8 @@ export function consultationRouteError(error: unknown): Response {
   const fieldErrors: Record<string, string> = {};
   for (const issue of error.issues) {
     const field = issue.path[0];
-    if (typeof field === "string" && !(field in fieldErrors)) fieldErrors[field] = issue.message;
+    if (typeof field === "string" && !(field in fieldErrors))
+      fieldErrors[field] = validationMessage(field, issue.message);
   }
   return clinicalJson(
     { error: "Please correct the highlighted fields.", fieldErrors },

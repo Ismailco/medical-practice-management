@@ -7,6 +7,9 @@ import { PrescriptionPdfButton } from "@/components/prescription-pdf-button";
 import { requirePageCapability } from "@/modules/auth/page";
 import { findPrescriptionDetail } from "@/modules/prescriptions/repository";
 import { prescriptionIdSchema } from "@/modules/prescriptions/validation";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatDateOnly } from "@/lib/presentation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,27 +26,14 @@ export default async function PrescriptionDetailPage({
   if (!record) notFound();
   const snapshot = record.snapshot;
   return (
-    <section className="max-w-5xl">
-      <Link className="text-sm font-medium text-teal-800 hover:underline" href="/prescriptions">
-        ← Back to prescriptions
-      </Link>
-      <header className="mt-4 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <p className="font-mono text-sm text-slate-500">{record.patientNumber}</p>
-          <h1 className="mt-1 text-3xl font-semibold">
-            {record.prescriptionNumber ?? "Draft prescription"}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            {record.patientDisplayName} · {record.status}
-            {record.issueDate ? ` · Issued ${record.issueDate}` : ""}
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${record.status === "VOID" ? "bg-red-100 text-red-800" : "bg-slate-100 text-slate-700"}`}
-        >
-          {record.status}
-        </span>
-      </header>
+    <section className="detail-page">
+      <PageHeader
+        backHref="/prescriptions"
+        backLabel="Back to prescriptions"
+        title={record.prescriptionNumber ?? "Draft prescription"}
+        description={`${record.patientDisplayName} · ${record.patientNumber}${record.issueDate ? ` · Issued ${formatDateOnly(record.issueDate)}` : ""}`}
+        status={<StatusBadge status={record.status} />}
+      />
       {record.status === "DRAFT" ? (
         <PrescriptionDraftEditor
           id={record.id}
@@ -53,8 +43,11 @@ export default async function PrescriptionDetailPage({
         />
       ) : (
         <>
-          <section className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-            <h2 className="text-xl font-semibold">Issued prescription</h2>
+          <section className="surface mt-4 p-6">
+            <SectionHeader
+              title="Issued identity snapshot"
+              description="These values are preserved as they were when the prescription was issued."
+            />
             <p className="mt-1 text-sm text-slate-600">
               Historical issue snapshot · Version {record.version}
             </p>
@@ -64,7 +57,7 @@ export default async function PrescriptionDetailPage({
                   <dt className="font-medium text-slate-500">Patient at issue</dt>
                   <dd className="mt-1">
                     {snapshot.patientName} · {snapshot.patientNumber} ·{" "}
-                    {snapshot.patientDateOfBirth}
+                    {formatDateOnly(snapshot.patientDateOfBirth)}
                   </dd>
                 </div>
                 <div>
@@ -122,14 +115,16 @@ export default async function PrescriptionDetailPage({
           ))}
         </p>
       ) : null}
-      <section className="mt-7">
-        <PrescriptionActions
-          id={record.id}
-          status={record.status}
-          version={record.version}
-          prescriptionNumber={record.prescriptionNumber}
-        />
-      </section>
+      {record.status !== "DRAFT" ? (
+        <section className="mt-7">
+          <PrescriptionActions
+            id={record.id}
+            status={record.status}
+            version={record.version}
+            prescriptionNumber={record.prescriptionNumber}
+          />
+        </section>
+      ) : null}
     </section>
   );
 }
@@ -151,8 +146,8 @@ function ItemList({
   }[];
 }>) {
   return (
-    <section className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold">Medication items</h2>
+    <section className="surface mt-7 p-6">
+      <SectionHeader title="Medication items" />
       <ol className="mt-4 space-y-4">
         {items.map((item) => (
           <li className="border-b border-slate-100 pb-4 last:border-0" key={item.id}>
