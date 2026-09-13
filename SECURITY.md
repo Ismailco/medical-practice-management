@@ -30,7 +30,7 @@ Use synthetic examples and redact operational identifiers.
 
 ## Project status
 
-This project is an early open-source demonstration and is not declared production-ready for real patient information. Production healthcare deployment requires independent security and applicable legal/compliance review. No automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or another framework is claimed.
+This project is an open-source beta and is not declared production-ready for real patient information. Production healthcare deployment requires independent security and applicable legal/compliance review. No automatic compliance with Moroccan Law 09-08, CNDP requirements, HIPAA, GDPR, or another framework is claimed.
 
 ## Supported beta
 

@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest an improvement to the existing practice-management scope.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests should not assume medical decision-support scope. Do not include real patient information or clinical data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem being solved
+      description: Who experiences this problem and why does it matter?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful behavior and its boundaries.
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Affected role or workflow
+      options:
+        - Doctor
+        - Secretary
+        - Patient administration
+        - Appointments
+        - Consultations or follow-ups
+        - Prescriptions
+        - Other existing workflow
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy implications
+      description: Explain data exposure, authorization, logging, caching, or compliance considerations.
+    validations:
+      required: true
