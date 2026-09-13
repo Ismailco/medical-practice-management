@@ -13,6 +13,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.integration.test.ts"],
     setupFiles: ["./tests/setup.ts"],
+    globalSetup: "./tests/integration-global-teardown.ts",
     fileParallelism: false,
   },
 });
