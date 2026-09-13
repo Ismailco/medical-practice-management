@@ -15,6 +15,9 @@ import { listPatientFollowUps } from "@/modules/follow-ups/repository";
 import { listPatientPrescriptions } from "@/modules/prescriptions/repository";
 import { findAdministrativePatientById } from "@/modules/patients/repository";
 import { patientIdSchema } from "@/modules/patients/validation";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatDateOnly, humanizeStatus } from "@/lib/presentation";
 
 type PageContext = {
   params: Promise<{ id: string }>;
@@ -43,62 +46,48 @@ export default async function PatientPage({ params, searchParams }: PageContext)
   const prescriptions = canReadPrescriptions ? await listPatientPrescriptions(patient.id) : [];
 
   return (
-    <section className="max-w-5xl">
-      <Link className="text-sm font-medium text-teal-800 hover:underline" href="/patients">
-        ← Back to patients
-      </Link>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              {patient.firstName} {patient.lastName}
-            </h1>
-            {archived ? (
-              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
-                Archived
-              </span>
+    <section className="detail-page">
+      <PageHeader
+        backHref="/patients"
+        backLabel="Back to patients"
+        title={`${patient.firstName} ${patient.lastName}`}
+        description={`${patient.patientNumber} · DOB ${formatDateOnly(patient.dateOfBirth)}`}
+        status={<StatusBadge status={archived ? "ARCHIVED" : "ACTIVE"} />}
+        actions={
+          <>
+            {!archived ? (
+              <Link className="btn btn-primary" href={`/appointments/new?patient=${patient.id}`}>
+                Schedule appointment
+              </Link>
             ) : null}
-          </div>
-          <p className="mt-2 font-mono text-sm text-slate-600">{patient.patientNumber}</p>
-        </div>
-        <div className="flex flex-wrap items-start gap-3">
-          {!archived ? (
-            <Link
-              className="rounded-md bg-teal-800 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-900"
-              href={`/appointments/new?patient=${patient.id}`}
-            >
-              Schedule appointment
-            </Link>
-          ) : null}
-          {!archived ? (
-            <Link
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-white"
-              href={`/patients/${patient.id}/edit`}
-            >
-              Edit details
-            </Link>
-          ) : null}
-          {hasCapability(currentUser.role, archived ? "patients.restore" : "patients.archive") ? (
-            <PatientLifecycleButton
-              archived={archived}
-              patientId={patient.id}
-              patientNumber={patient.patientNumber}
-              version={patient.version}
-            />
-          ) : null}
-        </div>
-      </div>
+            {!archived ? (
+              <Link className="btn btn-secondary" href={`/patients/${patient.id}/edit`}>
+                Edit details
+              </Link>
+            ) : null}
+            {hasCapability(currentUser.role, archived ? "patients.restore" : "patients.archive") ? (
+              <PatientLifecycleButton
+                archived={archived}
+                patientId={patient.id}
+                patientNumber={patient.patientNumber}
+                version={patient.version}
+              />
+            ) : null}
+          </>
+        }
+      />
 
       {archived ? (
         <p className="mt-6 rounded-md border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700">
-          This record is archived and cannot be edited until a doctor restores it.
+          This record is archived and cannot be edited until a doctor restores it. Historical
+          records remain available.
         </p>
       ) : null}
 
-      <dl className="mt-7 grid gap-x-8 gap-y-6 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2">
+      <dl className="surface mt-7 grid gap-x-8 gap-y-6 p-6 sm:grid-cols-2">
         <div>
           <dt className="text-sm font-medium text-slate-500">Date of birth</dt>
-          <Value>{patient.dateOfBirth}</Value>
+          <Value>{formatDateOnly(patient.dateOfBirth)}</Value>
         </div>
         <div>
           <dt className="text-sm font-medium text-slate-500">Phone</dt>
@@ -123,15 +112,15 @@ export default async function PatientPage({ params, searchParams }: PageContext)
       </dl>
 
       <p className="mt-4 text-xs text-slate-500">
-        Created {patient.createdAt.toISOString()} · Updated {patient.updatedAt.toISOString()} ·
-        Version {patient.version}
+        Created {formatClinicDateTime(patient.createdAt)} · Updated{" "}
+        {formatClinicDateTime(patient.updatedAt)} · Version {patient.version}
       </p>
 
-      <div className="mt-10 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-950">Appointments</h2>
-        <span className="text-sm text-slate-500">{appointmentHistory.total} total</span>
-      </div>
-      <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+      <SectionHeader
+        title="Appointments"
+        actions={<span className="text-sm text-slate-500">{appointmentHistory.total} total</span>}
+      />
+      <ul className="surface mt-3 divide-y overflow-hidden">
         {appointmentHistory.items.length === 0 ? (
           <li className="p-6 text-sm text-slate-600">No appointment history.</li>
         ) : (
@@ -152,7 +141,7 @@ export default async function PatientPage({ params, searchParams }: PageContext)
                 ) : null}
               </div>
               <span className="text-sm font-medium text-slate-700">
-                {item.status.replaceAll("_", " ")}
+                <StatusBadge status={item.status} />
               </span>
             </li>
           ))
@@ -186,10 +175,10 @@ export default async function PatientPage({ params, searchParams }: PageContext)
       {canReadConsultations ? (
         <section className="mt-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-slate-950">Consultations</h2>
+            <h2 className="section-title">Consultations</h2>
             {!archived ? <StartDirectConsultationButton patientId={patient.id} /> : null}
           </div>
-          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+          <ul className="surface mt-3 divide-y overflow-hidden">
             {consultations.length === 0 ? (
               <li className="p-6 text-sm text-slate-600">No consultation history.</li>
             ) : (
@@ -205,7 +194,7 @@ export default async function PatientPage({ params, searchParams }: PageContext)
                     {formatClinicDateTime(new Date(consultation.startedAt))}
                   </Link>
                   <span className="text-sm text-slate-700">
-                    {consultation.status === "IN_PROGRESS" ? "In progress" : "Finalized"}
+                    <StatusBadge status={consultation.status} />
                   </span>
                 </li>
               ))
@@ -215,8 +204,8 @@ export default async function PatientPage({ params, searchParams }: PageContext)
       ) : null}
       {canReadFollowUps ? (
         <section className="mt-10">
-          <h2 className="text-xl font-semibold text-slate-950">Follow-ups</h2>
-          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+          <h2 className="section-title">Follow-ups</h2>
+          <ul className="surface mt-3 divide-y overflow-hidden">
             {followUps.length === 0 ? (
               <li className="p-6 text-sm text-slate-600">No follow-up history.</li>
             ) : (
@@ -230,11 +219,11 @@ export default async function PatientPage({ params, searchParams }: PageContext)
                       className="font-medium text-teal-800 hover:underline"
                       href={`/follow-ups/${item.id}`}
                     >
-                      Due {item.dueDate}
+                      Due {formatDateOnly(item.dueDate)}
                     </Link>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{item.reason}</p>
                   </div>
-                  <span className="text-sm font-medium text-slate-700">{item.status}</span>
+                  <StatusBadge status={item.status} />
                 </li>
               ))
             )}
@@ -245,10 +234,10 @@ export default async function PatientPage({ params, searchParams }: PageContext)
       {canReadPrescriptions ? (
         <section className="mt-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-slate-950">Prescriptions</h2>
+            <h2 className="section-title">Prescriptions</h2>
             {!archived ? <PrescriptionCreateButton patientId={patient.id} /> : null}
           </div>
-          <ul className="mt-3 divide-y rounded-lg border border-slate-200 bg-white">
+          <ul className="surface mt-3 divide-y overflow-hidden">
             {prescriptions.length === 0 ? (
               <li className="p-6 text-sm text-slate-600">No prescription history.</li>
             ) : (
@@ -264,8 +253,8 @@ export default async function PatientPage({ params, searchParams }: PageContext)
                     {item.prescriptionNumber ?? "Draft prescription"}
                   </Link>
                   <span className="text-sm text-slate-600">
-                    {item.status}
-                    {item.issueDate ? ` · ${item.issueDate}` : ""}
+                    {humanizeStatus(item.status)}
+                    {item.issueDate ? ` · ${formatDateOnly(item.issueDate)}` : ""}
                   </span>
                 </li>
               ))

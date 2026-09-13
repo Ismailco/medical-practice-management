@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type RevisionValues = Readonly<{
   reasonForVisit: string | null;
@@ -27,6 +28,7 @@ export function ConsultationEditor({ consultationId, version, revisionNumber, cu
   const router = useRouter();
   const [pending, setPending] = useState<"save" | "finalize" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,13 +63,6 @@ export function ConsultationEditor({ consultationId, version, revisionNumber, cu
 
   async function finalize() {
     if (pending || revisionNumber < 1) return;
-    if (
-      !window.confirm(
-        "Finalizing locks this consultation. Further corrections must be added as addenda. Finalize now?",
-      )
-    ) {
-      return;
-    }
     setPending("finalize");
     setMessage(null);
     try {
@@ -89,8 +84,7 @@ export function ConsultationEditor({ consultationId, version, revisionNumber, cu
     }
   }
 
-  const inputClass =
-    "mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100";
+  const inputClass = "field-control mt-1.5";
   return (
     <form className="space-y-6" noValidate onSubmit={save}>
       <div>
@@ -149,18 +143,14 @@ export function ConsultationEditor({ consultationId, version, revisionNumber, cu
           {message}
         </p>
       ) : null}
-      <div className="flex flex-wrap justify-between gap-3 border-t border-slate-200 pt-5">
-        <button
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
-          disabled={pending !== null}
-          type="submit"
-        >
+      <div className="sticky-actions justify-between">
+        <button className="btn btn-secondary" disabled={pending !== null} type="submit">
           {pending === "save" ? "Saving…" : "Save revision"}
         </button>
         <button
-          className="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900 disabled:opacity-50"
+          className="btn btn-primary"
           disabled={pending !== null || revisionNumber < 1}
-          onClick={finalize}
+          onClick={() => setConfirmOpen(true)}
           type="button"
         >
           {pending === "finalize" ? "Finalizing…" : "Finalize consultation"}
@@ -169,6 +159,17 @@ export function ConsultationEditor({ consultationId, version, revisionNumber, cu
       {revisionNumber < 1 ? (
         <p className="text-xs text-slate-500">Save at least one revision before finalizing.</p>
       ) : null}
+      <ConfirmDialog
+        confirmLabel="Finalize consultation"
+        description="The finalized clinical revision cannot be edited. Corrections must be recorded through an addendum."
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void finalize();
+        }}
+        open={confirmOpen}
+        title="Finalize this consultation?"
+      />
     </form>
   );
 }

@@ -12,6 +12,9 @@ import { findConsultationDetail } from "@/modules/consultations/repository";
 import { consultationIdSchema } from "@/modules/consultations/validation";
 import { listConsultationFollowUps } from "@/modules/follow-ups/repository";
 import { listConsultationPrescriptions } from "@/modules/prescriptions/repository";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatDateOnly } from "@/lib/presentation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -49,53 +52,70 @@ export default async function ConsultationPage({ params }: Props) {
   const prescriptions = await listConsultationPrescriptions(record.id);
 
   return (
-    <section className="max-w-5xl">
-      <Link className="text-sm font-medium text-teal-800 hover:underline" href="/consultations">
-        ← Back to consultations
-      </Link>
-      <header className="mt-4 border-b border-slate-200 pb-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-sm text-slate-500">{record.patientNumber}</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-              {record.patientDisplayName}
-            </h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Started {formatClinicDateTime(new Date(record.startedAt))} · Dr. {record.doctorName}
-            </p>
-          </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold">
-            {record.status === "IN_PROGRESS" ? "In progress" : "Finalized"}
-          </span>
-        </div>
-      </header>
+    <section className="clinical-page">
+      <PageHeader
+        backHref="/consultations"
+        backLabel="Back to consultations"
+        title={record.patientDisplayName}
+        description={`${record.patientNumber} · Started ${formatClinicDateTime(new Date(record.startedAt))} · Dr. ${record.doctorName}`}
+        status={<StatusBadge status={record.status} />}
+      />
       {record.status === "IN_PROGRESS" ? (
-        <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold">Clinical note</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Current revision {record.revisionCount || "not yet saved"} · Consultation version{" "}
-              {record.version}
-            </p>
+        <div className="clinical-workspace">
+          <div className="surface p-6">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold">Clinical note</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Current revision {record.revisionCount || "not yet saved"} · Consultation version{" "}
+                {record.version}
+              </p>
+            </div>
+            <ConsultationEditor
+              consultationId={record.id}
+              {...(current
+                ? {
+                    current: {
+                      reasonForVisit: current.reasonForVisit,
+                      observations: current.observations,
+                      diagnosis: current.diagnosis,
+                      notes: current.notes,
+                    },
+                  }
+                : {})}
+              revisionNumber={record.revisionCount}
+              version={record.version}
+            />
           </div>
-          <ConsultationEditor
-            consultationId={record.id}
-            {...(current
-              ? {
-                  current: {
-                    reasonForVisit: current.reasonForVisit,
-                    observations: current.observations,
-                    diagnosis: current.diagnosis,
-                    notes: current.notes,
-                  },
-                }
-              : {})}
-            revisionNumber={record.revisionCount}
-            version={record.version}
-          />
+          <aside className="surface clinical-context p-5">
+            <SectionHeader title="Visit context" />
+            <dl className="metadata-list mt-4">
+              <div>
+                <dt>Patient</dt>
+                <dd>{record.patientDisplayName}</dd>
+              </div>
+              <div>
+                <dt>Patient number</dt>
+                <dd className="font-mono">{record.patientNumber}</dd>
+              </div>
+              <div>
+                <dt>Revision</dt>
+                <dd>{record.revisionCount || "Not yet saved"}</dd>
+              </div>
+              <div>
+                <dt>Record status</dt>
+                <dd>
+                  <StatusBadge status={record.status} />
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-5 text-xs text-slate-500">
+              Clinical documentation stays in the revision history and cannot be edited after
+              finalization.
+            </p>
+          </aside>
         </div>
       ) : (
-        <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
+        <div className="surface mt-4 p-6">
           <div className="mb-5">
             <h2 className="text-xl font-semibold">Finalized clinical record</h2>
             <p className="mt-1 text-sm text-slate-600">
@@ -113,7 +133,7 @@ export default async function ConsultationPage({ params }: Props) {
       )}
       {record.revisions.length > 0 ? (
         <section className="mt-8">
-          <h2 className="text-xl font-semibold">Revision history</h2>
+          <SectionHeader title="Revision history" />
           <div className="mt-3 space-y-3">
             {record.revisions.map((revision) => (
               <details
@@ -137,8 +157,11 @@ export default async function ConsultationPage({ params }: Props) {
         </section>
       ) : null}
       {record.status === "FINALIZED" ? (
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold">Addenda</h2>
+        <section className="surface mt-8 p-6">
+          <SectionHeader title="Addenda" />
+          <div className="callout callout-warning mt-4">
+            <strong>Addenda are permanent.</strong> To correct an addendum, create another addendum.
+          </div>
           <div className="mt-4 space-y-4">
             {record.addenda.length === 0 ? (
               <p className="text-sm text-slate-600">No addenda.</p>
@@ -156,7 +179,7 @@ export default async function ConsultationPage({ params }: Props) {
           <ClinicalAddendumForm consultationId={record.id} />
         </section>
       ) : null}
-      <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+      <section className="surface mt-8 p-6">
         <h2 className="text-xl font-semibold">Follow-ups</h2>
         <ul className="mt-4 divide-y divide-slate-100">
           {followUps.length === 0 ? (
@@ -170,16 +193,16 @@ export default async function ConsultationPage({ params }: Props) {
                   className="font-medium text-teal-800 hover:underline"
                   href={`/follow-ups/${item.id}`}
                 >
-                  Due {item.dueDate}
+                  Due {formatDateOnly(item.dueDate)}
                 </Link>
-                <span className="text-sm text-slate-600">{item.status}</span>
+                <StatusBadge status={item.status} />
               </li>
             ))
           )}
         </ul>
         <FollowUpCreateForm consultationId={record.id} />
       </section>
-      <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+      <section className="surface mt-8 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Prescriptions</h2>
           <PrescriptionCreateButton consultationId={record.id} />
@@ -199,8 +222,12 @@ export default async function ConsultationPage({ params }: Props) {
                   {item.prescriptionNumber ?? "Draft prescription"}
                 </Link>
                 <span className="text-sm text-slate-600">
-                  {item.status}
-                  {item.issueDate ? ` · ${item.issueDate}` : ""}
+                  {item.status === "DRAFT"
+                    ? "Draft"
+                    : item.status === "VOID"
+                      ? "Void"
+                      : "Finalized"}
+                  {item.issueDate ? ` · ${formatDateOnly(item.issueDate)}` : ""}
                 </span>
               </li>
             ))

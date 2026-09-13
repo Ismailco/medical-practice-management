@@ -7,6 +7,8 @@ import { allowedTransitions } from "@/modules/appointments/lifecycle";
 import { findAppointmentById } from "@/modules/appointments/repository";
 import { clinicTimezone, formatClinicDateTime } from "@/modules/appointments/timezone";
 import { appointmentIdSchema } from "@/modules/appointments/validation";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type Props = { params: Promise<{ id: string }> };
 const labels = {
@@ -25,24 +27,23 @@ export default async function AppointmentPage({ params }: Props) {
   const item = await findAppointmentById(id.data);
   if (!item) notFound();
   return (
-    <section className="max-w-4xl">
-      <Link className="text-sm font-medium text-teal-800 hover:underline" href="/appointments">
-        ← Back to appointments
-      </Link>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-sm text-slate-500">{item.patientNumber}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{item.patientDisplayName}</h1>
-          <p className="mt-2 text-sm text-slate-600">Appointment details</p>
-        </div>
-        <AppointmentActions
-          allowedTransitions={allowedTransitions(user.role, item.status)}
-          appointmentId={item.id}
-          status={item.status}
-          version={item.version}
-        />
-      </div>
-      <dl className="mt-7 grid gap-6 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2">
+    <section className="detail-page">
+      <PageHeader
+        backHref="/appointments"
+        backLabel="Back to appointments"
+        title={item.patientDisplayName}
+        description={`${item.patientNumber} · Appointment details`}
+        status={<StatusBadge status={item.status} label={labels[item.status]} />}
+        actions={
+          <AppointmentActions
+            allowedTransitions={allowedTransitions(user.role, item.status)}
+            appointmentId={item.id}
+            status={item.status}
+            version={item.version}
+          />
+        }
+      />
+      <dl className="surface mt-7 grid gap-6 p-6 sm:grid-cols-2">
         <div>
           <dt className="text-sm font-medium text-slate-500">Patient</dt>
           <dd className="mt-1">

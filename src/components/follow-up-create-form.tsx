@@ -75,10 +75,12 @@ export function FollowUpCreateForm(source: Source) {
         <input
           className="mt-1.5 rounded-md border border-slate-300 px-3 py-2"
           id={`follow-up-date-${source.consultationId ?? source.patientId}`}
+          lang="en-GB"
           name="dueDate"
           required
           type="date"
         />
+        <p className="field-help">Day / month / year</p>
       </div>
       <div>
         <label

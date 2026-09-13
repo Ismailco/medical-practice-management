@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { readPatientError } from "@/modules/patients/client-response";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Props = Readonly<{
   patientId: string;
@@ -16,16 +17,10 @@ export function PatientLifecycleButton({ patientId, patientNumber, version, arch
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const action = archived ? "restore" : "archive";
 
   async function changeState() {
-    const confirmed = window.confirm(
-      archived
-        ? `Restore patient ${patientNumber} to the active list?`
-        : `Archive patient ${patientNumber}? The record will remain preserved.`,
-    );
-    if (!confirmed) return;
-
     setPending(true);
     setError(null);
     try {
@@ -56,7 +51,7 @@ export function PatientLifecycleButton({ patientId, patientNumber, version, arch
             : "rounded-md border border-amber-600 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50"
         }
         disabled={pending}
-        onClick={changeState}
+        onClick={() => setConfirmOpen(true)}
         type="button"
       >
         {pending ? "Working…" : archived ? "Restore patient" : "Archive patient"}
@@ -66,6 +61,22 @@ export function PatientLifecycleButton({ patientId, patientNumber, version, arch
           {error}
         </p>
       ) : null}
+      <ConfirmDialog
+        confirmLabel={archived ? "Restore patient" : "Archive patient"}
+        danger={!archived}
+        description={
+          archived
+            ? "The patient will return to the active list."
+            : "The patient will no longer accept new active workflow records. Historical records remain available."
+        }
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void changeState();
+        }}
+        open={confirmOpen}
+        title={archived ? `Restore ${patientNumber}?` : `Archive ${patientNumber}?`}
+      />
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Item = {
   medicationName: string;
@@ -41,7 +43,9 @@ export function PrescriptionDraftEditor({
   const [linkedConsultation, setLinkedConsultation] = useState(consultationId ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<"save" | "finalize" | "discard" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"finalize" | "discard" | null>(null);
+  const busy = busyAction !== null;
 
   function updateItem(index: number, field: keyof Item, value: string) {
     setItems((current) =>
@@ -62,7 +66,7 @@ export function PrescriptionDraftEditor({
   }
 
   async function save() {
-    setBusy(true);
+    setBusyAction("save");
     setError(null);
     setSaved(false);
     try {
@@ -82,29 +86,44 @@ export function PrescriptionDraftEditor({
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The draft could not be saved.");
     } finally {
-      setBusy(false);
+      setBusyAction(null);
+    }
+  }
+
+  async function callAction(path: "finalize" | "discard") {
+    setBusyAction(path);
+    setError(null);
+    try {
+      const response = await fetch(`/api/prescriptions/${id}/${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ expectedVersion: version }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The prescription operation failed.");
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The prescription operation failed.");
+    } finally {
+      setBusyAction(null);
     }
   }
 
   return (
-    <div className="mt-6 space-y-5">
+    <div className="prescription-draft-editor mt-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Prescription items</h2>
-        <button
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
-          onClick={() => setItems((current) => [...current, blankItem()])}
-          type="button"
-        >
+        <h2 className="section-title">Prescription items</h2>
+        <Button onClick={() => setItems((current) => [...current, blankItem()])} type="button">
           Add item
-        </button>
+        </Button>
       </div>
       {items.length === 0 ? (
-        <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-600">
-          Add at least one item before finalizing.
+        <p className="callout callout-warning">
+          <strong>No medication items yet.</strong> Add at least one item before finalizing.
         </p>
       ) : null}
       {items.map((item, index) => (
-        <fieldset className="rounded-lg border border-slate-200 p-4" key={index}>
+        <fieldset className="surface p-4" key={index}>
           <legend className="px-2 text-sm font-semibold text-slate-700">Item {index + 1}</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {(
@@ -125,7 +144,8 @@ export function PrescriptionDraftEditor({
                     : field.charAt(0).toUpperCase() + field.slice(1)}
                 </span>
                 <input
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                  className="field-control mt-1"
+                  required={field === "medicationName"}
                   value={item[field] ?? ""}
                   onChange={(event) => updateItem(index, field, event.target.value)}
                 />
@@ -134,7 +154,7 @@ export function PrescriptionDraftEditor({
             <label className="text-sm text-slate-700 sm:col-span-2">
               <span className="block font-medium">Instructions</span>
               <textarea
-                className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2"
+                className="field-control mt-1 min-h-20"
                 value={item.instructions ?? ""}
                 onChange={(event) => updateItem(index, "instructions", event.target.value)}
               />
@@ -172,22 +192,58 @@ export function PrescriptionDraftEditor({
       <label className="block text-sm text-slate-700">
         <span className="font-medium">Consultation ID (optional)</span>
         <input
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+          className="field-control mt-1"
           value={linkedConsultation}
           onChange={(event) => setLinkedConsultation(event.target.value)}
         />
       </label>
-      <div className="flex items-center gap-3">
+      <div aria-live="polite" className="sticky-actions prescription-draft-actions">
+        <div className="prescription-draft-primary-actions">
+          <Button disabled={busy} onClick={() => void save()} type="button" variant="primary">
+            {busyAction === "save" ? "Saving…" : "Save draft"}
+          </Button>
+          <button
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={() => setConfirmAction("finalize")}
+            type="button"
+          >
+            {busyAction === "finalize" ? "Finalizing…" : "Finalize prescription"}
+          </button>
+        </div>
         <button
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="btn btn-danger prescription-draft-discard"
           disabled={busy}
-          onClick={() => void save()}
+          onClick={() => setConfirmAction("discard")}
           type="button"
         >
-          Save draft
+          {busyAction === "discard" ? "Discarding…" : "Discard draft"}
         </button>
         {saved ? <span className="text-sm text-teal-800">Draft saved.</span> : null}
-        {error ? <span className="text-sm text-red-700">{error}</span> : null}
+        {error ? (
+          <p className="basis-full text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <ConfirmDialog
+          confirmLabel={confirmAction === "discard" ? "Discard draft" : "Finalize prescription"}
+          danger={confirmAction === "discard"}
+          description={
+            confirmAction === "discard"
+              ? "This draft has not been issued and will be removed from active work."
+              : "Issuing the prescription locks its contents. Corrections require a new replacement prescription."
+          }
+          onCancel={() => setConfirmAction(null)}
+          onConfirm={() => {
+            const action = confirmAction;
+            setConfirmAction(null);
+            if (action) void callAction(action);
+          }}
+          open={confirmAction !== null}
+          title={
+            confirmAction === "discard" ? "Discard this draft?" : "Finalize this prescription?"
+          }
+        />
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { validationMessage } from "@/lib/presentation";
+
 export type PatientFieldErrors = Readonly<Record<string, string>>;
 
 export function readPatientError(value: unknown): {
@@ -20,7 +22,7 @@ export function readPatientError(value: unknown): {
     value.fieldErrors !== null
   ) {
     for (const [field, error] of Object.entries(value.fieldErrors)) {
-      if (typeof error === "string") fieldErrors[field] = error;
+      if (typeof error === "string") fieldErrors[field] = validationMessage(field, error);
     }
   }
 

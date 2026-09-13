@@ -3,6 +3,7 @@ import "server-only";
 import { ZodError } from "zod";
 
 import { noStoreJson, safeRouteError } from "@/modules/auth/http";
+import { validationMessage } from "@/lib/presentation";
 import { AppointmentOverlapError, InvalidAppointmentTimeError } from "./errors";
 
 export function appointmentRouteError(error: unknown): Response {
@@ -20,7 +21,7 @@ export function appointmentRouteError(error: unknown): Response {
     return noStoreJson(
       {
         error: "Please correct the highlighted fields.",
-        fieldErrors: { localStartTime: error.message },
+        fieldErrors: { localStartTime: validationMessage("localStartTime", error.message) },
       },
       { status: 400 },
     );
@@ -29,7 +30,8 @@ export function appointmentRouteError(error: unknown): Response {
   const fieldErrors: Record<string, string> = {};
   for (const issue of error.issues) {
     const field = issue.path[0];
-    if (typeof field === "string" && !(field in fieldErrors)) fieldErrors[field] = issue.message;
+    if (typeof field === "string" && !(field in fieldErrors))
+      fieldErrors[field] = validationMessage(field, issue.message);
   }
   return noStoreJson(
     { error: "Please correct the highlighted fields.", fieldErrors },

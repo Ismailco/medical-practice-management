@@ -7,6 +7,9 @@ import { formatClinicDateTime } from "@/modules/appointments/timezone";
 import { requirePageCapability } from "@/modules/auth/page";
 import { findFollowUpDetail } from "@/modules/follow-ups/repository";
 import { followUpIdSchema } from "@/modules/follow-ups/validation";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { formatDateOnly } from "@/lib/presentation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,25 +26,18 @@ export default async function FollowUpPage({ params }: Props) {
   const terminalAt = record.completedAt ?? record.cancelledAt;
   const terminalActor = record.completedByName ?? record.cancelledByName;
   return (
-    <section className="max-w-4xl">
-      <Link className="text-sm font-medium text-teal-800 hover:underline" href="/follow-ups">
-        ← Back to follow-ups
-      </Link>
-      <header className="mt-4 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <p className="font-mono text-sm text-slate-500">{record.patientNumber}</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-            {record.patientDisplayName}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">Due {record.dueDate}</p>
-        </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold">
-          {record.status}
-        </span>
-      </header>
+    <section className="detail-page">
+      <PageHeader
+        backHref="/follow-ups"
+        backLabel="Back to follow-ups"
+        title={record.patientDisplayName}
+        description={`${record.patientNumber} · Due ${formatDateOnly(record.dueDate)}`}
+        status={<StatusBadge status={record.status} />}
+      />
 
-      <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold">Sensitive follow-up reason</h2>
+      <div className="surface mt-4 p-6">
+        <SectionHeader title="Sensitive follow-up reason" />
+        <p className="mt-2 text-xs text-slate-500">Visible to doctor accounts only.</p>
         <p className="mt-3 whitespace-pre-wrap text-slate-950">{record.reason}</p>
         <div className="mt-5 flex flex-wrap gap-4 text-sm">
           <Link
@@ -63,8 +59,8 @@ export default async function FollowUpPage({ params }: Props) {
 
       {record.status === "PENDING" ? (
         <>
-          <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold">Edit pending follow-up</h2>
+          <div className="surface mt-7 p-6">
+            <SectionHeader title="Edit pending follow-up" />
             <div className="mt-4">
               <FollowUpEditor
                 id={record.id}
@@ -74,8 +70,8 @@ export default async function FollowUpPage({ params }: Props) {
               />
             </div>
           </div>
-          <div className="mt-7 rounded-lg border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold">Lifecycle</h2>
+          <div className="surface mt-7 p-6">
+            <SectionHeader title="Lifecycle" />
             <div className="mt-4">
               <FollowUpActions id={record.id} version={record.version} />
             </div>

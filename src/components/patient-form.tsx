@@ -8,6 +8,7 @@ import {
   readPatientError,
   type PatientFieldErrors,
 } from "@/modules/patients/client-response";
+import { Button } from "@/components/ui/button";
 
 type PatientFormValues = Readonly<{
   id?: string;
@@ -34,7 +35,7 @@ const fields = [
 function FieldError({ field, errors }: { field: string; errors: PatientFieldErrors }) {
   const error = errors[field];
   return error ? (
-    <p className="mt-1 text-sm text-red-700" id={`${field}-error`}>
+    <p className="field-error" id={`${field}-error`}>
       {error}
     </p>
   ) : null;
@@ -46,6 +47,7 @@ export function PatientForm({ initial }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<PatientFieldErrors>({});
   const editing = initial?.id !== undefined;
+  const errorEntries = Object.entries(fieldErrors);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,7 +79,7 @@ export function PatientForm({ initial }: Props) {
 
       if (!response.ok) {
         const error = readPatientError(result);
-        setMessage(error.message);
+        setMessage(Object.keys(error.fieldErrors).length > 0 ? null : error.message);
         setFieldErrors(error.fieldErrors);
         return;
       }
@@ -99,8 +101,18 @@ export function PatientForm({ initial }: Props) {
 
   return (
     <form className="space-y-7" noValidate onSubmit={submit}>
+      {errorEntries.length > 0 ? (
+        <div className="error-summary" role="alert">
+          <h2>Please correct the highlighted fields.</h2>
+          <ul>
+            {errorEntries.map(([field, error]) => (
+              <li key={field}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <fieldset className="grid gap-5 sm:grid-cols-2" disabled={pending}>
-        <legend className="sr-only">Patient identity</legend>
+        <legend className="form-section-title">Identity and contact</legend>
         {fields.map((field, index) => (
           <div key={field.name}>
             <label className="block text-sm font-medium text-slate-800" htmlFor={field.name}>
@@ -110,7 +122,7 @@ export function PatientForm({ initial }: Props) {
               aria-describedby={fieldErrors[field.name] ? `${field.name}-error` : undefined}
               aria-invalid={fieldErrors[field.name] ? true : undefined}
               autoFocus={!editing && index === 0}
-              className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="field-control mt-1.5"
               defaultValue={initial?.[field.name] ?? ""}
               id={field.name}
               maxLength={field.maxLength}
@@ -126,15 +138,19 @@ export function PatientForm({ initial }: Props) {
             Date of birth
           </label>
           <input
-            aria-describedby={fieldErrors.dateOfBirth ? "dateOfBirth-error" : undefined}
+            aria-describedby={`dateOfBirth-help${fieldErrors.dateOfBirth ? " dateOfBirth-error" : ""}`}
             aria-invalid={fieldErrors.dateOfBirth ? true : undefined}
-            className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5"
             defaultValue={initial?.dateOfBirth ?? ""}
             id="dateOfBirth"
+            lang="en-GB"
             name="dateOfBirth"
             required
             type="date"
           />
+          <p className="field-help" id="dateOfBirth-help">
+            Day / month / year
+          </p>
           <FieldError errors={fieldErrors} field="dateOfBirth" />
         </div>
 
@@ -146,7 +162,7 @@ export function PatientForm({ initial }: Props) {
             aria-describedby={fieldErrors.phone ? "phone-error" : undefined}
             aria-invalid={fieldErrors.phone ? true : undefined}
             autoComplete="tel"
-            className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5"
             defaultValue={initial?.phone ?? ""}
             id="phone"
             inputMode="tel"
@@ -164,7 +180,7 @@ export function PatientForm({ initial }: Props) {
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
             aria-invalid={fieldErrors.email ? true : undefined}
             autoComplete="email"
-            className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5"
             defaultValue={initial?.email ?? ""}
             id="email"
             maxLength={254}
@@ -181,7 +197,7 @@ export function PatientForm({ initial }: Props) {
           <textarea
             aria-describedby={fieldErrors.address ? "address-error" : undefined}
             aria-invalid={fieldErrors.address ? true : undefined}
-            className="mt-1.5 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5 min-h-24"
             defaultValue={initial?.address ?? ""}
             id="address"
             maxLength={500}
@@ -192,10 +208,10 @@ export function PatientForm({ initial }: Props) {
       </fieldset>
 
       <fieldset
-        className="grid gap-5 border-t border-slate-200 pt-6 sm:grid-cols-2"
+        className="form-section grid gap-5 border-t border-slate-200 pt-6 sm:grid-cols-2"
         disabled={pending}
       >
-        <legend className="mb-4 text-base font-semibold text-slate-950">
+        <legend className="form-section-title mb-4">
           Emergency contact <span className="font-normal text-slate-500">(optional)</span>
         </legend>
         <div>
@@ -210,7 +226,7 @@ export function PatientForm({ initial }: Props) {
               fieldErrors.emergencyContactName ? "emergencyContactName-error" : undefined
             }
             aria-invalid={fieldErrors.emergencyContactName ? true : undefined}
-            className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5"
             defaultValue={initial?.emergencyContactName ?? ""}
             id="emergencyContactName"
             maxLength={100}
@@ -230,7 +246,7 @@ export function PatientForm({ initial }: Props) {
               fieldErrors.emergencyContactPhone ? "emergencyContactPhone-error" : undefined
             }
             aria-invalid={fieldErrors.emergencyContactPhone ? true : undefined}
-            className="mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            className="field-control mt-1.5"
             defaultValue={initial?.emergencyContactPhone ?? ""}
             id="emergencyContactPhone"
             inputMode="tel"
@@ -242,31 +258,18 @@ export function PatientForm({ initial }: Props) {
       </fieldset>
 
       {message ? (
-        <p
-          aria-live="polite"
-          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800"
-          role="alert"
-        >
+        <p aria-live="polite" className="error-summary" role="alert">
           {message}
         </p>
       ) : null}
 
-      <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
-        <button
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
-          disabled={pending}
-          onClick={() => router.back()}
-          type="button"
-        >
+      <div className="sticky-actions">
+        <Button disabled={pending} onClick={() => router.back()} type="button">
           Cancel
-        </button>
-        <button
-          className="rounded-md bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:bg-teal-900 disabled:opacity-50"
-          disabled={pending}
-          type="submit"
-        >
+        </Button>
+        <Button disabled={pending} type="submit" variant="primary">
           {pending ? "Saving…" : editing ? "Save changes" : "Create patient"}
-        </button>
+        </Button>
       </div>
     </form>
   );
