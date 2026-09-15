@@ -8,9 +8,12 @@ Medical Practice Management is an open-source clinic workstation for small medic
 
 This is the current `0.1.0-beta.2` release. The repository and its demos contain synthetic data only; the project does not automatically provide healthcare compliance. A real deployment requires independent security, legal, and infrastructure review.
 
-![Doctor dashboard](docs/assets/screenshots/dashboard-doctor.png)
+<video controls preload="metadata" poster="./docs/assets/screenshots/dashboard-doctor.png" width="100%">
+  <source src="./docs/assets/videos/medical-ai-workflow-demo.mp4" type="video/mp4">
+  <a href="./docs/assets/videos/medical-ai-workflow-demo.mp4">Watch the clinic workstation walkthrough</a>
+</video>
 
-_Doctor dashboard using synthetic demo data._
+_Clinic workstation walkthrough using synthetic demo data._
 
 ## Engineering highlights
 
