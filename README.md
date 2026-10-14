@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Ismailco/medical-practice-management/actions/workflows/ci.yml/badge.svg)](https://github.com/Ismailco/medical-practice-management/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/Ismailco/medical-practice-management?include_prereleases&label=latest%20release)](https://github.com/Ismailco/medical-practice-management/releases)
-[![Apache-2.0 license](https://img.shields.io/github/license/Ismailco/medical-practice-management)](LICENSE)
+[![MIT license](https://img.shields.io/github/license/Ismailco/medical-practice-management)](LICENSE)
 
 Medical Practice Management is an open-source clinic workstation for small medical practices. It provides administrative patient records, appointment scheduling, doctor-only consultations and follow-ups, prescription workflows, and separate doctor/secretary authorization on a PostgreSQL-backed Next.js/TypeScript architecture.
 
@@ -224,4 +224,4 @@ prescription formatting remains a deployment/jurisdiction responsibility.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under the [MIT License](LICENSE).
